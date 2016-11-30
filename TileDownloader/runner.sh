@@ -13,7 +13,7 @@ echo ""
 echo ""
 
 echo "Binarizing road tiles"
-for file in `ls ./tmp/satImage*.jpg`; do
+for file in `ls ./groundtruth/satImage*.jpg`; do
 	convert $file -fuzz 1% -fill 'rgb(0,0,0)' -opaque 'rgb(228, 227,223)' $file
 	convert $file -fuzz 50% -fill 'rgb(255, 255, 255)' -opaque 'rgb(255, 255, 255)' $file
 done

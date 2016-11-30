@@ -22,85 +22,127 @@
   function initMap() {
 
     var styles = [
-      {
+    {
+        "featureType": "all",
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "visibility": "off"
+            }
+        ]
+    },
+    {
+        "featureType": "all",
+        "elementType": "labels",
+        "stylers": [
+            {
+                "visibility": "off"
+            }
+        ]
+    },
+    {
         "featureType": "administrative",
         "elementType": "all",
         "stylers": [
-          {
-            "visibility": "off"
-          }
+            {
+                "visibility": "off"
+            }
         ]
-      },
-      {
+    },
+    {
         "featureType": "landscape",
         "elementType": "all",
         "stylers": [
-          {
-            "visibility": "off"
-          }
+            {
+                "visibility": "off"
+            }
         ]
-      },
-      {
+    },
+    {
+        "featureType": "landscape",
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "visibility": "off"
+            }
+        ]
+    },
+    {
+        "featureType": "landscape",
+        "elementType": "labels",
+        "stylers": [
+            {
+                "visibility": "off"
+            }
+        ]
+    },
+    {
         "featureType": "poi",
         "elementType": "all",
         "stylers": [
-          {
-            "visibility": "off"
-          }
+            {
+                "visibility": "off"
+            }
         ]
-      },
-      {
+    },
+    {
         "featureType": "road",
         "elementType": "geometry.fill",
         "stylers": [
-          {
-            "visibility": "on"
-          },
-          {
-            "color": "#ffffff"
-          }
+            {
+                "visibility": "on"
+            },
+            {
+                "color": "#ffffff"
+            }
         ]
-      },
-      {
+    },
+    {
         "featureType": "road",
         "elementType": "geometry.stroke",
         "stylers": [
-          {
-            "visibility": "on"
-          },
-          {
-            "color": "#ffffff"
-          }
+            {
+                "color": "#ffffff"
+            }
         ]
-      },
-      {
+    },
+    {
         "featureType": "road",
         "elementType": "labels",
         "stylers": [
-          {
-            "visibility": "off"
-          }
+            {
+                "visibility": "off"
+            }
         ]
-      },
-      {
+    },
+    {
+        "featureType": "road",
+        "elementType": "labels.text",
+        "stylers": [
+            {
+                "visibility": "off"
+            }
+        ]
+    },
+    {
         "featureType": "transit",
         "elementType": "all",
         "stylers": [
-          {
-            "visibility": "off"
-          }
+            {
+                "visibility": "off"
+            }
         ]
-      },
-      {
+    },
+    {
         "featureType": "water",
         "elementType": "all",
         "stylers": [
-          {
-            "visibility": "off"
-          }
+            {
+                "visibility": "off"
+            }
         ]
-      }
-    ];
+    }
+];
 
     // Create a new StyledMapType object, passing it the array of styles,
     // as well as the name to be displayed on the map type control.
@@ -111,7 +153,7 @@
     // to the map type control.
     var mapOptions = {
       zoom: 18,
-      center: new google.maps.LatLng(34.171730, -118.126722),
+      center: new google.maps.LatLng(37.123617, -120.263638),
       disableDefaultUI: true,
       scrollwheel: false
     };
@@ -128,4 +170,4 @@
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvzVOGFMcRkMEvfcHEl8fQnE9n8gVNasg&callback=initMap">
 </script>
 </body>
-</html>
+</html>47.374056, -122.15993847.374056, -122.159938

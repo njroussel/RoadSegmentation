@@ -5,8 +5,8 @@ var page = webPage.create();
 const url = system.args[1];
 const folder = system.args[2];
 
-var width = 8000;
-var height = 8000;
+var width = 4000;
+var height = 4000;
 
 const TILE_SIZE = 400;
 const TILE_NAME = 'satImage';
