@@ -4,6 +4,14 @@
     <style type="text/css">
         html, body { height: 100%; margin: 0; padding: 0; }
         #map { height: 100%; }
+
+        * {
+            -webkit-transition-property: none!important;
+            transition-property: none!important;
+            /* These doesn't affect anything, but, just in case. */
+            -webkit-animation: none!important;
+            animation: none!important;
+        }
     </style>
 </head>
 <body>
@@ -103,7 +111,7 @@
     // to the map type control.
     var mapOptions = {
       zoom: 18,
-      center: new google.maps.LatLng(47.546997, 9.298741),
+      center: new google.maps.LatLng(34.171730, -118.126722),
       disableDefaultUI: true,
       scrollwheel: false
     };
