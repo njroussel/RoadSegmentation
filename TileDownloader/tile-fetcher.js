@@ -32,7 +32,7 @@ function fetchTiles(page, folder) {
         height: TILE_SIZE
       };
 
-      page.render(folder + '/' + TILE_NAME + (i * widthTilesCount + j) + EXTENSION, {format: 'jpeg', quality: '100'});
+      page.render(folder + '/' + TILE_NAME + (i * widthTilesCount + j + 101) + EXTENSION, {format: 'jpeg', quality: '100'});
       console.log("Fetched tile " + (i * widthTilesCount + j) + "/" + (widthTilesCount * heightTilesCount - 1))
     }
   }
