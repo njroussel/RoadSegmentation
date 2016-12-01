@@ -4,13 +4,14 @@ var system = require("system");
 var page = webPage.create();
 const url = system.args[1];
 const folder = system.args[2];
+const startingIndex = system.args[3];
 
 var width = 4000;
 var height = 4000;
 
 const TILE_SIZE = 400;
-const TILE_NAME = 'satImage';
-const EXTENSION = '.jpg';
+const TILE_NAME = 'satImage_';
+const EXTENSION = '.png';
 
 page.viewportSize = {
   width: width + TILE_SIZE,
@@ -32,7 +33,10 @@ function fetchTiles(page, folder) {
         height: TILE_SIZE
       };
 
-      page.render(folder + '/' + TILE_NAME + (i * widthTilesCount + j + 101) + EXTENSION, {format: 'jpeg', quality: '100'});
+      page.render(folder + '/' + TILE_NAME + (i * widthTilesCount + j + (startingIndex * 1)) + EXTENSION, {
+        format: 'png',
+        quality: '100'
+      });
       console.log("Fetched tile " + (i * widthTilesCount + j) + "/" + (widthTilesCount * heightTilesCount - 1))
     }
   }
@@ -49,7 +53,9 @@ function openPageAndFetchTiles(page, url, folder) {
         });
 
         if ("complete" === readyState) {
+          window.setTimeout(function () {
             fetchTiles(page, folder);
+          }, 10000); // Change timeout as required to allow sufficient time
         } else {
           checkReadyState();
         }
