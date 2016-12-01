@@ -44,6 +44,11 @@ FLAGS = tf.app.flags.FLAGS
 
 # Extract patches from a given image
 def img_crop(im, w, h):
+    """ Crop an image into 'patches'.
+        @param im : The image to crop (array).
+        @param w : width of a patch.
+        @param h : height of a patch.
+    """
     list_patches = []
     imgwidth = im.shape[0]
     imgheight = im.shape[1]
@@ -60,6 +65,8 @@ def img_crop(im, w, h):
 def extract_data(filename, num_images):
     """Extract the images into a 4D tensor [image index, y, x, channels].
     Values are rescaled from [0, 255] down to [-0.5, 0.5].
+        @param filename : path to the images.
+        @param num_images : number of images in the folder.
     """
     imgs = []
     for i in range(1, num_images+1):
@@ -84,8 +91,10 @@ def extract_data(filename, num_images):
     data = [img_patches[i][j] for i in range(len(img_patches)) for j in range(len(img_patches[i]))]
     return numpy.asarray(data)
         
-# Assign a label to a patch v
 def value_to_class(v):
+    """ Assign a label to a patch given its color mean.
+        @param v : mean label of the image/patch.
+    """
     foreground_threshold = 0.25 # percentage of pixels > 1 required to assign a foreground label to a patch
     df = numpy.sum(v)
     if df > foreground_threshold:
@@ -93,9 +102,11 @@ def value_to_class(v):
     else:
         return [1, 0]
 
-# Extract label images
 def extract_labels(filename, num_images):
-    """Extract the labels into a 1-hot matrix [image index, label index]."""
+    """ Extract the labels into a 1-hot matrix [image index, label index].
+        @param filename : folder containing images.
+        @param num_images : number of images in that folder.
+    """
     gt_imgs = []
     for i in range(1, num_images+1):
         imageid = "satImage_%.3d" % i
@@ -117,14 +128,22 @@ def extract_labels(filename, num_images):
 
 
 def error_rate(predictions, labels):
-    """Return the error rate based on dense predictions and 1-hot labels."""
+    """ Compute error rate, that is the percentage of wrong predictions.
+        @param predictions : Array of predictions.
+        @param labels : Array of expected labels.
+    """
     return 100.0 - (
         100.0 *
         numpy.sum(numpy.argmax(predictions, 1) == numpy.argmax(labels, 1)) /
         predictions.shape[0])
 
-# Write predictions from neural network to a file
 def write_predictions_to_file(predictions, labels, filename):
+    # TODO: doc to be confirmed.
+    """ Writes the predictions to a file.
+        @param predictions : The computed predictions.
+        @param labels : The labels.
+        @param filename : File in which all of this will be written.
+    """
     max_labels = numpy.argmax(labels, 1)
     max_predictions = numpy.argmax(predictions, 1)
     file = open(filename, "w")
@@ -133,14 +152,24 @@ def write_predictions_to_file(predictions, labels, filename):
         file.write(max_labels(i) + ' ' + max_predictions(i))
     file.close()
 
-# Print predictions from neural network
 def print_predictions(predictions, labels):
+    # TODO: doc to be confirmed.
+    """ Print the predictions in stdout.
+        @param predictions : The computed predictions.
+        @param labels : The labels.
+    """
     max_labels = numpy.argmax(labels, 1)
     max_predictions = numpy.argmax(predictions, 1)
     print (str(max_labels) + ' ' + str(max_predictions))
 
-# Convert array of labels to an image
 def label_to_img(imgwidth, imgheight, w, h, labels):
+    """ Create a binary image from labels.
+        @param imgwidth : image width.
+        @param imgheight : image height.
+        @param w : width of a patch.
+        @param h : height of a patch.
+        @param labels : labels of the patches.
+    """
     array_labels = numpy.zeros([imgwidth, imgheight])
     idx = 0
     for i in range(0,imgheight,h):
@@ -154,11 +183,18 @@ def label_to_img(imgwidth, imgheight, w, h, labels):
     return array_labels
 
 def img_float_to_uint8(img):
+    """ Convert a float image to a uint8 one.
+        @param img : The image to be converted.
+    """
     rimg = img - numpy.min(img)
     rimg = (rimg / numpy.max(rimg) * PIXEL_DEPTH).round().astype(numpy.uint8)
     return rimg
 
 def concatenate_images(img, gt_img):
+    """ Produce results images side by side [stallite|groundtruth]. 
+        @param img : The satellite image.
+        @param gt_img : The corresponding groundtruth image.
+    """
     nChannels = len(gt_img.shape)
     w = gt_img.shape[0]
     h = gt_img.shape[1]
@@ -175,6 +211,10 @@ def concatenate_images(img, gt_img):
     return cimg
 
 def make_img_overlay(img, predicted_img):
+    """ Draw red patches on the satellite image. 
+        @param img : The original image.
+        @param predicted_img : The label.
+    """
     w = img.shape[0]
     h = img.shape[1]
     color_mask = numpy.zeros((w, h, 3), dtype=numpy.uint8)
@@ -191,6 +231,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     data_dir = 'training/'
     train_data_filename = data_dir + 'images/'
+    test_data_filename = './test_set_images/'
     train_labels_filename = data_dir + 'groundtruth/' 
 
     # Extract it into numpy arrays.
@@ -199,6 +240,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     num_epochs = NUM_EPOCHS
 
+    # Count class population.
     c0 = 0
     c1 = 0
     for i in range(len(train_labels)):
@@ -208,6 +250,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             c1 = c1 + 1
     print ('Number of data points per class: c0 = ' + str(c0) + ' c1 = ' + str(c1))
 
+    # Make populations even.
     print ('Balancing training data...')
     min_c = min(c0, c1)
     idx0 = [i for i, j in enumerate(train_labels) if j[0] == 1]
@@ -237,8 +280,10 @@ def main(argv=None):  # pylint: disable=unused-argument
     train_data_node = tf.placeholder(
         tf.float32,
         shape=(BATCH_SIZE, IMG_PATCH_SIZE, IMG_PATCH_SIZE, NUM_CHANNELS))
+
     train_labels_node = tf.placeholder(tf.float32,
                                        shape=(BATCH_SIZE, NUM_LABELS))
+
     train_all_data_node = tf.constant(train_data)
 
     # The variables below hold all the trainable weights. They are passed an
@@ -524,6 +569,8 @@ def main(argv=None):  # pylint: disable=unused-argument
             Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
             oimg = get_prediction_with_overlay(train_data_filename, i)
             oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")       
+
+
 
 if __name__ == '__main__':
     tf.app.run()
