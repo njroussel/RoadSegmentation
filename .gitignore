@@ -1,3 +1,7 @@
 DataSets/*
 TileDownloader/.idea/*
 *.jpg
+test_set_images/*
+training/*
+TileDownloader/groundtruth/*
+TileDownloader/images/*

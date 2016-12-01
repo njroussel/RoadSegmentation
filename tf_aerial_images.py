@@ -24,8 +24,8 @@ import tensorflow as tf
 NUM_CHANNELS = 3 # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2
-TRAINING_SIZE = 20
-VALIDATION_SIZE = 5  # Size of the validation set.
+TRAINING_SIZE = 450
+VALIDATION_SIZE = 50  # Size of the validation set.
 SEED = 66478  # Set to None for random seed.
 BATCH_SIZE = 16 # 64
 NUM_EPOCHS = 5
@@ -68,6 +68,9 @@ def extract_data(filename, num_images):
         if os.path.isfile(image_filename):
             print ('Loading ' + image_filename)
             img = mpimg.imread(image_filename)
+            tmp =numpy.array(img)
+            if len(tmp.shape) == 3:
+                img = img[:,:,:3]
             imgs.append(img)
         else:
             print ('File ' + image_filename + ' does not exist')
@@ -79,7 +82,6 @@ def extract_data(filename, num_images):
 
     img_patches = [img_crop(imgs[i], IMG_PATCH_SIZE, IMG_PATCH_SIZE) for i in range(num_images)]
     data = [img_patches[i][j] for i in range(len(img_patches)) for j in range(len(img_patches[i]))]
-
     return numpy.asarray(data)
         
 # Assign a label to a patch v
@@ -303,6 +305,9 @@ def main(argv=None):  # pylint: disable=unused-argument
         imageid = "satImage_%.3d" % image_idx
         image_filename = filename + imageid + ".png"
         img = mpimg.imread(image_filename)
+        tmp =numpy.array(img)
+        if len(tmp.shape) == 3:
+            img = img[:,:,:3]
 
         img_prediction = get_prediction(img)
         cimg = concatenate_images(img, img_prediction)
@@ -315,6 +320,9 @@ def main(argv=None):  # pylint: disable=unused-argument
         imageid = "satImage_%.3d" % image_idx
         image_filename = filename + imageid + ".png"
         img = mpimg.imread(image_filename)
+        tmp =numpy.array(img)
+        if len(tmp.shape) == 3:
+            img = img[:,:,:3]
 
         img_prediction = get_prediction(img)
         oimg = make_img_overlay(img, img_prediction)
@@ -511,6 +519,7 @@ def main(argv=None):  # pylint: disable=unused-argument
         if not os.path.isdir(prediction_training_dir):
             os.mkdir(prediction_training_dir)
         for i in range(1, TRAINING_SIZE+1):
+            print ('prediction {}'.format(i))
             pimg = get_prediction_with_groundtruth(train_data_filename, i)
             Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
             oimg = get_prediction_with_overlay(train_data_filename, i)
