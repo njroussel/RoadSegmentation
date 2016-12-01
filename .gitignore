@@ -5,3 +5,6 @@ test_set_images/*
 training/*
 TileDownloader/groundtruth/*
 TileDownloader/images/*
+predictions_training/*
+test_set_images_bak/*
+test_predictions/*

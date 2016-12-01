@@ -21,11 +21,13 @@ import tensorflow.python.platform
 import numpy
 import tensorflow as tf
 
+FILE_REGEX = "satImage_%.3d"
+
 NUM_CHANNELS = 3 # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2
-TRAINING_SIZE = 450
-VALIDATION_SIZE = 50  # Size of the validation set.
+TRAINING_SIZE = 20
+VALIDATION_SIZE = 5  # Size of the validation set.
 SEED = 66478  # Set to None for random seed.
 BATCH_SIZE = 16 # 64
 NUM_EPOCHS = 5
@@ -70,7 +72,8 @@ def extract_data(filename, num_images):
     """
     imgs = []
     for i in range(1, num_images+1):
-        imageid = "satImage_%.3d" % i
+        global FILE_REGEX
+        imageid = FILE_REGEX % i
         image_filename = filename + imageid + ".png"
         if os.path.isfile(image_filename):
             print ('Loading ' + image_filename)
@@ -109,7 +112,8 @@ def extract_labels(filename, num_images):
     """
     gt_imgs = []
     for i in range(1, num_images+1):
-        imageid = "satImage_%.3d" % i
+        global FILE_REGEX
+        imageid = FILE_REGEX % i
         image_filename = filename + imageid + ".png"
         if os.path.isfile(image_filename):
             print ('Loading ' + image_filename)
@@ -347,7 +351,8 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Get a concatenation of the prediction and groundtruth for given input file
     def get_prediction_with_groundtruth(filename, image_idx):
 
-        imageid = "satImage_%.3d" % image_idx
+        global FILE_REGEX
+        imageid = FILE_REGEX % image_idx
         image_filename = filename + imageid + ".png"
         img = mpimg.imread(image_filename)
         tmp =numpy.array(img)
@@ -362,7 +367,8 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Get prediction overlaid on the original image for given input file
     def get_prediction_with_overlay(filename, image_idx):
 
-        imageid = "satImage_%.3d" % image_idx
+        global FILE_REGEX
+        imageid = FILE_REGEX % image_idx
         image_filename = filename + imageid + ".png"
         img = mpimg.imread(image_filename)
         tmp =numpy.array(img)
@@ -570,6 +576,22 @@ def main(argv=None):  # pylint: disable=unused-argument
             oimg = get_prediction_with_overlay(train_data_filename, i)
             oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")       
 
+        ## Run on test set.
+        print ('Running on test set.')
+        global FILE_REGEX
+        FILE_REGEX = 'test_%d'
+        TEST_SIZE = 50
+        test_data_filename = './test_set_images/'
+        test_dir ='test_predictions/'
+        if not os.path.isdir(test_dir):
+            os.mkdir(test_dir)
+        for i in range(1, TEST_SIZE+1):
+            print ('test prediction {}'.format(i))
+            pimg = get_prediction_with_groundtruth(test_data_filename, i)
+            Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
+            oimg = get_prediction_with_overlay(test_data_filename, i)
+            oimg.save(test_dir + "overlay_" + str(i) + ".png")       
+        
 
 
 if __name__ == '__main__':
