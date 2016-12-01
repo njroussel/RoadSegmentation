@@ -100,7 +100,7 @@ def value_to_class(v):
     """
     foreground_threshold = 0.25 # percentage of pixels > 1 required to assign a foreground label to a patch
     df = numpy.sum(v)
-    if df > foreground_threshold:
+    if df < foreground_threshold:
         return [0, 1]
     else:
         return [1, 0]
@@ -360,7 +360,11 @@ def main(argv=None):  # pylint: disable=unused-argument
             img = img[:,:,:3]
 
         img_prediction = get_prediction(img)
-        cimg = concatenate_images(img, img_prediction)
+        ######################################## 
+        # OALALALA ATTENTION SALE !!!! REMOVE THIS SHIT 
+        ######################################## 
+        return img_float_to_uint8(img_prediction)
+        #cimg = concatenate_images(img, img_prediction)
 
         return cimg
 
