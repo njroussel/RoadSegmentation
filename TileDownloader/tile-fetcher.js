@@ -55,7 +55,7 @@ function openPageAndFetchTiles(page, url, folder) {
         if ("complete" === readyState) {
           window.setTimeout(function () {
             fetchTiles(page, folder);
-          }, 10000); // Change timeout as required to allow sufficient time
+          }, 20000); // Change timeout as required to allow sufficient time
         } else {
           checkReadyState();
         }
