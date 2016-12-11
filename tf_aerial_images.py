@@ -328,7 +328,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
                         # print_predictions(predictions, batch_labels)
 
-                        print('Epoch %.2f' % (float(step) * BATCH_SIZE / train_size))
+                        print('%.2f' % (float(step) * BATCH_SIZE / train_size) + '% of Epoch ' + str(iepoch))
                         print('Minibatch loss: %.3f, learning rate: %.6f' % (l, lr))
                         print('Minibatch error: %.1f%%' % error_rate(predictions,
                                                                      batch_labels))
@@ -344,19 +344,19 @@ def main(argv=None):  # pylint: disable=unused-argument
                 save_path = saver.save(s, FLAGS.train_dir + "/model.ckpt")
                 print("Model saved in file: %s" % save_path)
 
-        print("Running prediction on training set")
-        prediction_training_dir = "predictions_training/"
-        if not os.path.isdir(prediction_training_dir):
-            os.mkdir(prediction_training_dir)
-        for i in range(1, TRAINING_SIZE + 1):
-            print('prediction {}'.format(i))
-            pimg = get_prediction_with_groundtruth(train_data_filename, i)
-            Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
-            oimg = get_prediction_with_overlay(train_data_filename, i)
-            oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
+        if TRAIN_PREDICTIONS:
+            print("Running prediction on training set")
+            prediction_training_dir = "predictions_training/"
+            if not os.path.isdir(prediction_training_dir):
+                os.mkdir(prediction_training_dir)
+            for i in range(1, TRAINING_SIZE + 1):
+                print('prediction {}'.format(i))
+                pimg = get_prediction_with_groundtruth(train_data_filename, i)
+                Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
+                oimg = get_prediction_with_overlay(train_data_filename, i)
+                oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
 
-            ## Run on test set.
-
+        ## Run on test set.
         print('Running on test set.')
         global FILE_REGEX
         FILE_REGEX = 'test_%d'

@@ -9,6 +9,7 @@ SEED = 66478  # Set to None for random seed.
 BATCH_SIZE = 16 # 64
 NUM_EPOCHS = 2
 RESTORE_MODEL = False # If True, restore existing model instead of training a new one
+TRAIN_PREDICTIONS = False # If True, restore existing model instead of training a new one
 RECORDING_STEP = 1000
 
 # Set image patch size in pixels
