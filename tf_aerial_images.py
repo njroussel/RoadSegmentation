@@ -325,28 +325,27 @@ def main(argv=None):  # pylint: disable=unused-argument
                 oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX)
                 oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
 
-        ## Run on test set.
-        print('Running on test set.')
-        FILE_REGEX = 'test_%d'
-        TEST_SIZE = 50
-        test_data_filename = './test_set_images/'
-        test_dir = 'test_predictions/'
-        if not os.path.isdir(test_dir):
-            os.mkdir(test_dir)
-        for i in range(1, TEST_SIZE + 1):
-            print('test prediction {}'.format(i))
-            pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX)
-            Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
-            oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX)
-            oimg.save(test_dir + "overlay_" + str(i) + ".png")
+        if TEST_PREDICTIONS:
+            ## Run on test set.
+            print('Running on test set.')
+            FILE_REGEX = 'test_%d'
+            TEST_SIZE = 50
+            test_data_filename = './test_set_images/'
+            test_dir = 'test_predictions/'
+            if not os.path.isdir(test_dir):
+                os.mkdir(test_dir)
+            for i in range(1, TEST_SIZE + 1):
+                print('test prediction {}'.format(i))
+                pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX)
+                Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
+                oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX)
+                oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
     print ("Begin validation")
     # Run Nico's code.
-    for i in range(validation_data.shape[0]):
-        val_input = validation_data[i]
-        val_label = validation_labels[i]
-
-    print ("Validation ends")
+    pred = get_prediction_from_patches(validation_data, s, model)
+    f1_score = F1_score(pred, validation_labels)
+    print ("Validation ends : F1 = ", f1_score)
 
     s.close()
 
