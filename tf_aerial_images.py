@@ -25,7 +25,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     train_labels_filename = data_dir + 'groundtruth/'
 
     # Extract it into numpy arrays.
-    train_data = extract_data(train_data_filename, TRAINING_SIZE)
+    train_data = extract_data(train_data_filename, TRAINING_SIZE, border=IMG_BORDER)
     train_labels = extract_labels(train_labels_filename, TRAINING_SIZE)
 
     num_epochs = NUM_EPOCHS
@@ -67,7 +67,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     # training step using the {feed_dict} argument to the Run() call below.
     train_data_node = tf.placeholder(
         tf.float32,
-        shape=(BATCH_SIZE, IMG_PATCH_SIZE, IMG_PATCH_SIZE, NUM_CHANNELS))
+        shape=(BATCH_SIZE, IMG_TOTAL_SIZE, IMG_TOTAL_SIZE, NUM_CHANNELS))
 
     train_labels_node = tf.placeholder(tf.float32,
                                        shape=(BATCH_SIZE, NUM_LABELS))
@@ -88,7 +88,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                             seed=SEED))
     conv2_biases = tf.Variable(tf.constant(0.1, shape=[64]))
     fc1_weights = tf.Variable(  # fully connected, depth 512.
-        tf.truncated_normal([int(IMG_PATCH_SIZE / 4 * IMG_PATCH_SIZE / 4 * 64), 512],
+        tf.truncated_normal([int(IMG_TOTAL_SIZE / 4 * IMG_TOTAL_SIZE / 4 * 64), 512],
                             stddev=0.1,
                             seed=SEED))
     fc1_biases = tf.Variable(tf.constant(0.1, shape=[512]))
@@ -136,7 +136,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     # Get prediction for given input image
     def get_prediction(img):
-        data = numpy.asarray(img_crop(img, IMG_PATCH_SIZE, IMG_PATCH_SIZE))
+        data = numpy.asarray(img_crop(img, IMG_PATCH_SIZE, IMG_PATCH_SIZE, border=IMG_BORDER))
         data_node = tf.constant(data)
         output = tf.nn.softmax(model(data_node))
         output_prediction = s.run(output)

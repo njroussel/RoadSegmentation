@@ -6,8 +6,8 @@ from PIL import Image
 
 from global_vars import *
 
-
-def img_crop(im, w, h):
+# Extract patches from a given image
+def img_crop(im, w, h, border = 0):
     """ Crop an image into 'patches'.
         @param im : The image to crop (array).
         @param w : width of a patch.
@@ -17,17 +17,21 @@ def img_crop(im, w, h):
     imgwidth = im.shape[0]
     imgheight = im.shape[1]
     is_2d = len(im.shape) < 3
+
+    if (border != 0):
+        im = numpy.array([
+            numpy.pad(im[:, :, i], ((border, border), (border, border)), 'constant', constant_values=0).T
+            for i in range(3)
+        ]).T
+
     for i in range(0, imgheight, h):
         for j in range(0, imgwidth, w):
-            if is_2d:
-                im_patch = im[j:j + w, i:i + h]
-            else:
-                im_patch = im[j:j + w, i:i + h, :]
+            im_patch = im[j:j+w+2*border, i:i+h+2*border]
             list_patches.append(im_patch)
+
     return list_patches
 
-
-def extract_data(filename, num_images):
+def extract_data(filename, num_images, border=0):
     """Extract the images into a 4D tensor [image index, y, x, channels].
     Values are rescaled from [0, 255] down to [-0.5, 0.5].
         @param filename : path to the images.
@@ -53,7 +57,7 @@ def extract_data(filename, num_images):
     IMG_HEIGHT = imgs[0].shape[1]
     N_PATCHES_PER_IMAGE = (IMG_WIDTH / IMG_PATCH_SIZE) * (IMG_HEIGHT / IMG_PATCH_SIZE)
 
-    img_patches = [img_crop(imgs[i], IMG_PATCH_SIZE, IMG_PATCH_SIZE) for i in range(num_images)]
+    img_patches = [img_crop(imgs[i], IMG_PATCH_SIZE, IMG_PATCH_SIZE, border) for i in range(num_images)]
     data = [img_patches[i][j] for i in range(len(img_patches)) for j in range(len(img_patches[i]))]
     return numpy.asarray(data)
 
