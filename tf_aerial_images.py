@@ -285,7 +285,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                 feed_dict = {train_data_node: batch_data,
                              train_labels_node: batch_labels}
 
-                if step % RECORDING_STEP == 0:
+                if ENABLE_RECORDING and step % RECORDING_STEP == 0:
 
                     summary_str, _, l, lr, predictions = s.run(
                         [summary_op, optimizer, loss, learning_rate, train_prediction],
