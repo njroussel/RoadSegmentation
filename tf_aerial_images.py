@@ -49,6 +49,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     print(len(new_indices))
     print(train_data.shape)
     train_data = train_data[new_indices, :, :, :]
+    print(str(train_data.shape))
     train_labels = train_labels[new_indices]
 
     train_size = train_labels.shape[0]
