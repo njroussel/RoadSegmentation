@@ -114,8 +114,18 @@ def main(argv=None):  # pylint: disable=unused-argument
                             stddev=0.1,
                             seed=SEED))
     conv2_biases = tf.Variable(tf.constant(0.1, shape=[64]))
+    conv3_weights = tf.Variable(
+        tf.truncated_normal([5, 5, 64, 128],
+                            stddev=0.1,
+                            seed=SEED))
+    conv3_biases = tf.Variable(tf.constant(0.1, shape=[128]))
+    conv4_weights = tf.Variable(
+        tf.truncated_normal([5, 5, 128, 256],
+                            stddev=0.1,
+                            seed=SEED))
+    conv4_biases = tf.Variable(tf.constant(0.1, shape=[256]))
     fc1_weights = tf.Variable(  # fully connected, depth 512.
-        tf.truncated_normal([int(IMG_TOTAL_SIZE / 4 * IMG_TOTAL_SIZE / 4 * 64), 512],
+        tf.truncated_normal([int(IMG_TOTAL_SIZE / 4 * IMG_TOTAL_SIZE / 4 * 256), 512],
                             stddev=0.1,
                             seed=SEED))
     fc1_biases = tf.Variable(tf.constant(0.1, shape=[512]))
@@ -145,12 +155,32 @@ def main(argv=None):  # pylint: disable=unused-argument
                               strides=[1, 2, 2, 1],
                               padding='SAME')
 
-        conv2 = tf.nn.conv2d(pool,
+        conv2 = tf.nn.conv2d(relu,
                              conv2_weights,
                              strides=[1, 1, 1, 1],
                              padding='SAME')
         relu2 = tf.nn.relu(tf.nn.bias_add(conv2, conv2_biases))
         pool2 = tf.nn.max_pool(relu2,
+                               ksize=[1, 2, 2, 1],
+                               strides=[1, 2, 2, 1],
+                               padding='SAME')
+
+        conv3 = tf.nn.conv2d(pool2,
+                             conv3_weights,
+                             strides=[1, 1, 1, 1],
+                             padding='SAME')
+        relu3 = tf.nn.relu(tf.nn.bias_add(conv3, conv3_biases))
+        pool3 = tf.nn.max_pool(relu3,
+                               ksize=[1, 2, 2, 1],
+                               strides=[1, 2, 2, 1],
+                               padding='SAME')
+        
+        conv4 = tf.nn.conv2d(relu3,
+                             conv4_weights,
+                             strides=[1, 1, 1, 1],
+                             padding='SAME')
+        relu4 = tf.nn.relu(tf.nn.bias_add(conv4, conv4_biases))
+        pool4 = tf.nn.max_pool(relu4,
                                ksize=[1, 2, 2, 1],
                                strides=[1, 2, 2, 1],
                                padding='SAME')
@@ -165,10 +195,12 @@ def main(argv=None):  # pylint: disable=unused-argument
 
         # Reshape the feature map cuboid into a 2D matrix to feed it to the
         # fully connected layers.
-        pool_shape = pool2.get_shape().as_list()
+        pool_shape = pool4.get_shape().as_list()
         reshape = tf.reshape(
-            pool2,
+            pool4,
             [pool_shape[0], pool_shape[1] * pool_shape[2] * pool_shape[3]])
+
+        print(pool_shape)
         # Fully connected layer. Note that the '+' operation automatically
         # broadcasts the biases.
         hidden = tf.nn.relu(tf.matmul(reshape, fc1_weights) + fc1_biases)
@@ -200,9 +232,9 @@ def main(argv=None):  # pylint: disable=unused-argument
         logits, train_labels_node))
     tf.scalar_summary('loss', loss)
 
-    all_params_node = [conv1_weights, conv1_biases, conv2_weights, conv2_biases, fc1_weights, fc1_biases, fc2_weights,
+    all_params_node = [conv1_weights, conv1_biases, conv2_weights, conv2_biases, conv3_weights, conv3_biases, conv4_weights, conv4_biases, fc1_weights, fc1_biases, fc2_weights,
                        fc2_biases]
-    all_params_names = ['conv1_weights', 'conv1_biases', 'conv2_weights', 'conv2_biases', 'fc1_weights', 'fc1_biases',
+    all_params_names = ['conv1_weights', 'conv1_biases', 'conv2_weights', 'conv2_biases', 'conv3_weights', 'conv3_biases', 'conv4_weights', 'conv4_biases', 'fc1_weights', 'fc1_biases',
                         'fc2_weights', 'fc2_biases']
     all_grads_node = tf.gradients(loss, all_params_node)
     all_grad_norms_node = []
