@@ -254,7 +254,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     batch = tf.Variable(0)
     # Decay once per epoch, using an exponential schedule starting at 0.01.
     learning_rate = tf.train.exponential_decay(
-        0.01,  # Base learning rate.
+        LEARNING_RATE,  # Base learning rate.
         batch * BATCH_SIZE,  # Current index into the dataset.
         train_size,  # Decay step.
         0.95,  # Decay rate.
