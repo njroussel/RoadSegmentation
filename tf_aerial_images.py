@@ -347,6 +347,13 @@ def main(argv=None):  # pylint: disable=unused-argument
     f1_score = F1_score(pred, validation_labels)
     print ("Validation ends : F1 = ", f1_score)
 
+
+    print ("Run on test set")
+    # Run Nico's code.
+    pred = get_prediction_from_patches(test_data, s, model)
+    f1_score = F1_score(pred, test_labels)
+    print ("Run on test ends : F1 = ", f1_score)
+
     s.close()
 
 if __name__ == '__main__':
