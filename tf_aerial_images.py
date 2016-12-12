@@ -19,6 +19,7 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def main(argv=None):  # pylint: disable=unused-argument
+    numpy.random.seed(0xDEADBEEF)
 
     data_dir = 'training/'
     train_data_filename = data_dir + 'images/'

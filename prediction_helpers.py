@@ -40,7 +40,6 @@ def get_prediction_with_groundtruth(filename, image_idx, s, model, file_regex):
 # Get prediction for given input image
 def get_prediction(img, s, model):
     data = numpy.asarray(img_crop(img, IMG_PATCH_SIZE, IMG_PATCH_SIZE, border=IMG_BORDER))
-    print ("ORIGINAL  {}".format(data.shape))
     data_node = tf.constant(data)
     output = tf.nn.softmax(model(data_node))
     output_prediction = s.run(output)
@@ -49,7 +48,6 @@ def get_prediction(img, s, model):
 
 def get_prediction_from_patches(patches, s, model):
     data = numpy.asarray(patches)
-    print ("PATEHCE  {}".format(data.shape))
     data_node = tf.constant(data)
     output = tf.nn.softmax(model(data_node))
     output_prediction = s.run(output)
