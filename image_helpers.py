@@ -31,7 +31,7 @@ def img_crop(im, w, h, border = 0):
 
     return list_patches
 
-def extract_data(filename, num_images, border=0):
+def extract_data(filename, num_images, file_regex, border=0):
     """Extract the images into a 4D tensor [image index, y, x, channels].
     Values are rescaled from [0, 255] down to [-0.5, 0.5].
         @param filename : path to the images.
@@ -39,8 +39,7 @@ def extract_data(filename, num_images, border=0):
     """
     imgs = []
     for i in range(1, num_images + 1):
-        global FILE_REGEX
-        imageid = FILE_REGEX % i
+        imageid = file_regex % i
         image_filename = filename + imageid + ".png"
         if os.path.isfile(image_filename):
             print('Loading ' + image_filename)
@@ -74,15 +73,14 @@ def value_to_class(v):
         return [1, 0]
 
 
-def extract_labels(filename, num_images):
+def extract_labels(filename, num_images, file_regex):
     """ Extract the labels into a 1-hot matrix [image index, label index].
         @param filename : folder containing images.
         @param num_images : number of images in that folder.
     """
     gt_imgs = []
     for i in range(1, num_images + 1):
-        global FILE_REGEX
-        imageid = FILE_REGEX % i
+        imageid = file_regex % i
         image_filename = filename + imageid + ".png"
         if os.path.isfile(image_filename):
             print('Loading ' + image_filename)

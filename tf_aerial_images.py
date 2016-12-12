@@ -10,6 +10,7 @@ import sys
 import tensorflow as tf
 
 from image_helpers import *
+from prediction_helpers import *
 
 tf.app.flags.DEFINE_string('train_dir', '/tmp/mnist',
                            """Directory where to write event logs """
@@ -25,8 +26,9 @@ def main(argv=None):  # pylint: disable=unused-argument
     train_labels_filename = data_dir + 'groundtruth/'
 
     # Extract it into numpy arrays.
-    train_data = extract_data(train_data_filename, TRAINING_SIZE, border=IMG_BORDER)
-    train_labels = extract_labels(train_labels_filename, TRAINING_SIZE)
+    FILE_REGEX = "satImage_%.3d"
+    train_data = extract_data(train_data_filename, TRAINING_SIZE, FILE_REGEX, border=IMG_BORDER)
+    train_labels = extract_labels(train_labels_filename, TRAINING_SIZE, FILE_REGEX)
 
     num_epochs = NUM_EPOCHS
 
@@ -97,67 +99,6 @@ def main(argv=None):  # pylint: disable=unused-argument
                             stddev=0.1,
                             seed=SEED))
     fc2_biases = tf.Variable(tf.constant(0.1, shape=[NUM_LABELS]))
-
-    def get_image_summary(img, idx=0):
-        V = tf.slice(img, (0, 0, 0, idx), (1, -1, -1, 1))
-        img_w = img.get_shape().as_list()[1]
-        img_h = img.get_shape().as_list()[2]
-        min_value = tf.reduce_min(V)
-        V = V - min_value
-        max_value = tf.reduce_max(V)
-        V = V / (max_value * PIXEL_DEPTH)
-        V = tf.reshape(V, (img_w, img_h, 1))
-        V = tf.transpose(V, (2, 0, 1))
-        V = tf.reshape(V, (-1, img_w, img_h, 1))
-        return V
-
-    # Make an image summary for 3d tensor image with index idx
-    def get_image_summary_3d(img):
-        V = tf.slice(img, (0, 0, 0), (1, -1, -1))
-        img_w = img.get_shape().as_list()[1]
-        img_h = img.get_shape().as_list()[2]
-        V = tf.reshape(V, (img_w, img_h, 1))
-        V = tf.transpose(V, (2, 0, 1))
-        V = tf.reshape(V, (-1, img_w, img_h, 1))
-        return V
-
-    # Get a concatenation of the prediction and groundtruth for given input file
-    def get_prediction_with_groundtruth(filename, image_idx):
-        global FILE_REGEX
-        imageid = FILE_REGEX % image_idx
-        image_filename = filename + imageid + ".png"
-        img = mpimg.imread(image_filename)
-        tmp = numpy.array(img)
-        if len(tmp.shape) == 3:
-            img = img[:, :, :3]
-
-        img_prediction = get_prediction(img)
-        return img_float_to_uint8(img_prediction)
-
-    # Get prediction for given input image
-    def get_prediction(img):
-        data = numpy.asarray(img_crop(img, IMG_PATCH_SIZE, IMG_PATCH_SIZE, border=IMG_BORDER))
-        data_node = tf.constant(data)
-        output = tf.nn.softmax(model(data_node))
-        output_prediction = s.run(output)
-        img_prediction = label_to_img(img.shape[0], img.shape[1], IMG_PATCH_SIZE, IMG_PATCH_SIZE, output_prediction)
-
-        return img_prediction
-
-    # Get prediction overlaid on the original image for given input file
-    def get_prediction_with_overlay(filename, image_idx):
-        global FILE_REGEX
-        imageid = FILE_REGEX % image_idx
-        image_filename = filename + imageid + ".png"
-        img = mpimg.imread(image_filename)
-        tmp = numpy.array(img)
-        if len(tmp.shape) == 3:
-            img = img[:, :, :3]
-
-        img_prediction = get_prediction(img)
-        oimg = make_img_overlay(img, img_prediction)
-
-        return oimg
 
     # We will replicate the model structure for the training subgraph, as well
     # as the evaluation subgraphs, while sharing the trainable parameters.
@@ -352,14 +293,13 @@ def main(argv=None):  # pylint: disable=unused-argument
                 os.mkdir(prediction_training_dir)
             for i in range(1, TRAINING_SIZE + 1):
                 print('prediction {}'.format(i))
-                pimg = get_prediction_with_groundtruth(train_data_filename, i)
+                pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX)
                 Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
-                oimg = get_prediction_with_overlay(train_data_filename, i)
+                oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX)
                 oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
 
         ## Run on test set.
         print('Running on test set.')
-        global FILE_REGEX
         FILE_REGEX = 'test_%d'
         TEST_SIZE = 50
         test_data_filename = './test_set_images/'
@@ -368,9 +308,9 @@ def main(argv=None):  # pylint: disable=unused-argument
             os.mkdir(test_dir)
         for i in range(1, TEST_SIZE + 1):
             print('test prediction {}'.format(i))
-            pimg = get_prediction_with_groundtruth(test_data_filename, i)
+            pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX)
             Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
-            oimg = get_prediction_with_overlay(test_data_filename, i)
+            oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX)
             oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
     s.close()
