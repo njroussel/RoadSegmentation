@@ -27,16 +27,17 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     # Extract it into numpy arrays.
     FILE_REGEX = "satImage_%.3d"
-    train_data = extract_data(train_data_filename, TRAINING_SIZE, FILE_REGEX, border=IMG_BORDER)
-    train_labels = extract_labels(train_labels_filename, TRAINING_SIZE, FILE_REGEX)
+    data = extract_data(train_data_filename, TRAINING_SIZE, FILE_REGEX, border=IMG_BORDER)
+    labels = extract_labels(train_labels_filename, TRAINING_SIZE, FILE_REGEX)
+
 
     num_epochs = NUM_EPOCHS
 
     # Count class population.
     c0 = 0
     c1 = 0
-    for i in range(len(train_labels)):
-        if train_labels[i][0] == 1:
+    for i in range(len(labels)):
+        if labels[i][0] == 1:
             c0 = c0 + 1
         else:
             c1 = c1 + 1
@@ -45,24 +46,48 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Make populations even.
     print('Balancing training data...')
     min_c = min(c0, c1)
-    idx0 = [i for i, j in enumerate(train_labels) if j[0] == 1]
-    idx1 = [i for i, j in enumerate(train_labels) if j[1] == 1]
+    idx0 = [i for i, j in enumerate(labels) if j[0] == 1]
+    idx1 = [i for i, j in enumerate(labels) if j[1] == 1]
     new_indices = idx0[0:min_c] + idx1[0:min_c]
     print(len(new_indices))
-    print(train_data.shape)
-    train_data = train_data[new_indices, :, :, :]
-    train_labels = train_labels[new_indices]
-
-    train_size = train_labels.shape[0]
+    print(data.shape)
+    data = data[new_indices, :, :, :]
+    labels = labels[new_indices]
 
     c0 = 0
     c1 = 0
-    for i in range(len(train_labels)):
-        if train_labels[i][0] == 1:
+    for i in range(len(labels)):
+        if labels[i][0] == 1:
             c0 = c0 + 1
         else:
             c1 = c1 + 1
     print('Number of data points per class: c0 = ' + str(c0) + ' c1 = ' + str(c1))
+
+    perm_indices = numpy.random.permutation(range(data.shape[0]))
+    train_limit = int(VALIDATION_TRAIN_PERC * len(perm_indices))
+    val_limit = int(VALIDATION_VAL_PERC * len(perm_indices))
+
+    train_data = data[perm_indices[0:train_limit]]
+    train_labels = labels[perm_indices[0:train_limit]]
+    train_size = train_labels.shape[0]
+
+    validation_data = data[perm_indices[train_limit:train_limit+val_limit]]
+    validation_labels = labels[perm_indices[train_limit:train_limit+val_limit]]
+
+    test_data = data[perm_indices[train_limit+val_limit:]]
+    test_labels = labels[perm_indices[train_limit+val_limit:]]
+
+    print ("After evening size = {}".format(train_size))
+
+    print ("### validation sizes ###")
+    print("Data size = {}".format(data.shape[0]))
+    print("train_data = {}".format(train_data.shape))
+    print("train_labels = {}".format(train_labels.shape))
+    print("validation_data = {}".format(validation_data.shape))
+    print("validation_labels = {}".format(validation_labels.shape))
+    print("test_data = {}".format(test_data.shape))
+    print("test_labels = {}".format(test_labels.shape))
+    print ("######")
 
     # This is where training samples and labels are fed to the graph.
     # These placeholder nodes will be fed a batch of training data at each
@@ -312,6 +337,14 @@ def main(argv=None):  # pylint: disable=unused-argument
             Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
             oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX)
             oimg.save(test_dir + "overlay_" + str(i) + ".png")
+
+    print ("Begin validation")
+    # Run Nico's code.
+    for i in range(validation_data.shape[0]):
+        val_input = validation_data[i]
+        val_label = validation_labels[i]
+
+    print ("Validation ends")
 
     s.close()
 
