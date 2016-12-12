@@ -47,14 +47,21 @@ def get_prediction(img, s, model):
     return img_prediction
 
 def get_prediction_from_patches(patches, s, model):
-    data = numpy.asarray(patches)
-    data_node = tf.constant(data)
-    output = tf.nn.softmax(model(data_node))
-    output_prediction = s.run(output)
-    return output_prediction
-    #img_prediction = label_to_img(img.shape[0], img.shape[1], IMG_PATCH_SIZE, IMG_PATCH_SIZE, output_prediction)
-    #return img_prediction
-
+    all_data = numpy.asarray(patches)
+    step = int(numpy.floor(all_data.shape[0] / BATCH_SIZE))
+    all_outputs = numpy.zeros((all_data.shape[0], 2))
+    for i in range(step):
+        if i != step-1:
+            data_node = tf.constant(all_data[i*step:(i+1)*step])
+        else:
+            data_node = tf.constant(all_data[i*step:])
+        output = tf.nn.softmax(model(data_node))
+        output_prediction = s.run(output)
+        idx = 0
+        for e in output_prediction:
+            all_outputs[i*step+idx] = e
+            idx += 1
+    return all_outputs
 
 # Get prediction overlaid on the original image for given input file
 def get_prediction_with_overlay(filename, image_idx, s, model, file_regex):
