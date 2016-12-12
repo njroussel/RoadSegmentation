@@ -285,14 +285,15 @@ def main(argv=None):  # pylint: disable=unused-argument
                 feed_dict = {train_data_node: batch_data,
                              train_labels_node: batch_labels}
 
-                if ENABLE_RECORDING and step % RECORDING_STEP == 0:
+                if step % RECORDING_STEP == 0:
 
                     summary_str, _, l, lr, predictions = s.run(
                         [summary_op, optimizer, loss, learning_rate, train_prediction],
                         feed_dict=feed_dict)
                     # summary_str = s.run(summary_op, feed_dict=feed_dict)
-                    summary_writer.add_summary(summary_str, step)
-                    summary_writer.flush()
+                    if ENABLE_RECORDING:
+                        summary_writer.add_summary(summary_str, step)
+                        summary_writer.flush()
 
                     # print_predictions(predictions, batch_labels)
 
@@ -311,8 +312,9 @@ def main(argv=None):  # pylint: disable=unused-argument
                         feed_dict=feed_dict)
 
             # Save the variables to disk.
-            save_path = saver.save(s, FLAGS.train_dir + "/model.ckpt")
-            print("Model saved in file: %s" % save_path)
+            if ENABLE_RECORDING:
+                save_path = saver.save(s, FLAGS.train_dir + "/model.ckpt")
+                print("Model saved in file: %s" % save_path)
 
         if TRAIN_PREDICTIONS:
             print("Running prediction on training set")
