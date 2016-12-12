@@ -108,6 +108,25 @@ def error_rate(predictions, labels):
         numpy.sum(numpy.argmax(predictions, 1) == numpy.argmax(labels, 1)) /
         predictions.shape[0])
 
+def F1_score(predictions, labels):
+    valid_index = numpy.argmax(predictions, 1) == numpy.argmax(labels, 1)
+    valid_prediction = predictions[valid_index]
+    false_prediction = predictions[~valid_index]
+
+    # True positive
+    TP = numpy.sum(numpy.argmax(valid_prediction, axis=1) == 1)
+    # True negative
+    TN = numpy.sum(numpy.argmax(valid_prediction, axis=1) == 0)
+    # False positive
+    FP = numpy.sum(numpy.argmax(false_prediction, axis=1) == 1)
+    # False negative
+    FN = numpy.sum(numpy.argmax(false_prediction, axis=1) == 0)
+
+    precision = TP / (FP + TP)
+    recall = TP / (FN + TP)
+
+    return 2 * (precision * recall) / (precision + recall)
+
 
 def write_predictions_to_file(predictions, labels, filename):
     # TODO: doc to be confirmed.
