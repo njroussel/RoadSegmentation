@@ -7,9 +7,6 @@ Credits: Aurelien Lucchi, ETH Zürich
 
 import sys
 
-import tensorflow as tf
-
-from image_helpers import *
 from prediction_helpers import *
 
 tf.app.flags.DEFINE_string('train_dir', '/tmp/mnist',
@@ -30,7 +27,6 @@ def main(argv=None):  # pylint: disable=unused-argument
     FILE_REGEX = "satImage_%.3d"
     data = extract_data(train_data_filename, TRAINING_SIZE, FILE_REGEX, border=IMG_BORDER)
     labels = extract_labels(train_labels_filename, TRAINING_SIZE, FILE_REGEX)
-
 
     num_epochs = NUM_EPOCHS
 
@@ -69,18 +65,21 @@ def main(argv=None):  # pylint: disable=unused-argument
     val_limit = int(VALIDATION_VAL_PERC * len(perm_indices))
 
     train_data = data[perm_indices[0:train_limit]]
+    train_data, means, stds = standardize(train_data)
     train_labels = labels[perm_indices[0:train_limit]]
     train_size = train_labels.shape[0]
 
-    validation_data = data[perm_indices[train_limit:train_limit+val_limit]]
-    validation_labels = labels[perm_indices[train_limit:train_limit+val_limit]]
+    validation_data = data[perm_indices[train_limit:train_limit + val_limit]]
+    validation_data, _, _ = standardize(validation_data, means=means, stds=stds)
+    validation_labels = labels[perm_indices[train_limit:train_limit + val_limit]]
 
-    test_data = data[perm_indices[train_limit+val_limit:]]
-    test_labels = labels[perm_indices[train_limit+val_limit:]]
+    test_data = data[perm_indices[train_limit + val_limit:]]
+    test_data, _, _ = standardize(test_data, means=means, stds=stds)
+    test_labels = labels[perm_indices[train_limit + val_limit:]]
 
-    print ("After evening size = {}".format(train_size))
+    print("After evening size = {}".format(train_size))
 
-    print ("### validation sizes ###")
+    print("### validation sizes ###")
     print("Data size = {}".format(data.shape[0]))
     print("train_data = {}".format(train_data.shape))
     print("train_labels = {}".format(train_labels.shape))
@@ -88,7 +87,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     print("validation_labels = {}".format(validation_labels.shape))
     print("test_data = {}".format(test_data.shape))
     print("test_labels = {}".format(test_labels.shape))
-    print ("######")
+    print("######")
 
     # This is where training samples and labels are fed to the graph.
     # These placeholder nodes will be fed a batch of training data at each
@@ -243,7 +242,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
 
-    init = tf.global_variables_initializer();
+    init = tf.global_variables_initializer()
 
     s = tf.Session()
     if RESTORE_MODEL:
@@ -253,7 +252,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     else:
         # Run all the initializers to prepare the trainable parameters.
-        #tf.initialize_all_variables().run()
+        # tf.initialize_all_variables().run()
         s.run(init)
 
         # Build the summary operation based on the TF collection of Summaries.
@@ -302,7 +301,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                     print('Minibatch error: %.1f%%' % error_rate(predictions,
                                                                  batch_labels))
                     print('Minibatch F1 score: %.1f' % F1_score(predictions,
-                                                                 batch_labels))
+                                                                batch_labels))
 
                     sys.stdout.flush()
                 else:
@@ -323,9 +322,9 @@ def main(argv=None):  # pylint: disable=unused-argument
                 os.mkdir(prediction_training_dir)
             for i in range(1, TRAINING_SIZE + 1):
                 print('prediction {}'.format(i))
-                pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX)
+                pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX, means, stds)
                 Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
-                oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX)
+                oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX, means, stds)
                 oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
 
         if TEST_PREDICTIONS:
@@ -339,25 +338,25 @@ def main(argv=None):  # pylint: disable=unused-argument
                 os.mkdir(test_dir)
             for i in range(1, TEST_SIZE + 1):
                 print('test prediction {}'.format(i))
-                pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX)
+                pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX, means, stds)
                 Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
-                oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX)
+                oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds)
                 oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
-    print ("Begin validation")
+    print("Begin validation")
     # Run Nico's code.
     pred = get_prediction_from_patches(validation_data, s, model)
     f1_score = F1_score(pred, validation_labels)
-    print ("Validation ends : F1 = ", f1_score)
+    print("Validation ends : F1 = ", f1_score)
 
-
-    print ("Run on test set")
+    print("Run on test set")
     # Run Nico's code.
     pred = get_prediction_from_patches(test_data, s, model)
     f1_score = F1_score(pred, test_labels)
-    print ("Run on test ends : F1 = ", f1_score)
+    print("Run on test ends : F1 = ", f1_score)
 
     s.close()
+
 
 if __name__ == '__main__':
     tf.app.run()

@@ -6,8 +6,51 @@ from PIL import Image
 
 from global_vars import *
 
+
+def standardize(patches, means=None, stds=None):
+    """ Standardize a group of patches.
+        Returns std_patches, means, stds.
+            @param patches : Patches to standardize.
+    """
+    r_layer = patches[:, :, :, 0]
+    g_layer = patches[:, :, :, 1]
+    b_layer = patches[:, :, :, 2]
+
+    if means is None:
+        r_mean = numpy.mean(r_layer)
+        g_mean = numpy.mean(g_layer)
+        b_mean = numpy.mean(b_layer)
+    else:
+        r_mean = means[0]
+        g_mean = means[1]
+        b_mean = means[2]
+
+    std_r_layer = r_layer - r_mean
+    std_g_layer = g_layer - g_mean
+    std_b_layer = b_layer - b_mean
+
+    if stds is None:
+        r_std = numpy.std(r_layer)
+        g_std = numpy.std(g_layer)
+        b_std = numpy.std(b_layer)
+    else:
+        r_std = stds[0]
+        g_std = stds[1]
+        b_std = stds[2]
+
+    if r_std > 0:
+        std_r_layer /= r_std
+    if g_std > 0:
+        std_g_layer /= g_std
+    if b_std > 0:
+        std_b_layer /= b_std
+
+    std_data = numpy.stack((std_r_layer, std_g_layer, std_b_layer), axis=3)
+    return std_data, [r_mean, g_mean, b_mean], [r_std, g_std, b_std]
+
+
 # Extract patches from a given image
-def img_crop(im, w, h, border = 0):
+def img_crop(im, w, h, border=0):
     """ Crop an image into 'patches'.
         @param im : The image to crop (array).
         @param w : width of a patch.
@@ -19,17 +62,18 @@ def img_crop(im, w, h, border = 0):
     is_2d = len(im.shape) < 3
 
     if (border != 0):
-        im = numpy.array([
-            numpy.pad(im[:, :, i], ((border, border), (border, border)), 'constant', constant_values=0).T
-            for i in range(3)
-        ]).T
+        im = numpy.array([numpy.pad(im[:, :, i], ((border, border), (border, border)), 'constant',
+                                    constant_values=0).T
+                          for i in range(3)
+                          ]).T
 
     for i in range(0, imgheight, h):
         for j in range(0, imgwidth, w):
-            im_patch = im[j:j+w+2*border, i:i+h+2*border]
+            im_patch = im[j:j + w + 2 * border, i:i + h + 2 * border]
             list_patches.append(im_patch)
 
     return list_patches
+
 
 def extract_data(filename, num_images, file_regex, border=0):
     """Extract the images into a 4D tensor [image index, y, x, channels].
@@ -107,6 +151,7 @@ def error_rate(predictions, labels):
         100.0 *
         numpy.sum(numpy.argmax(predictions, 1) == numpy.argmax(labels, 1)) /
         predictions.shape[0])
+
 
 def F1_score(predictions, labels):
     valid_index = numpy.argmax(predictions, 1) == numpy.argmax(labels, 1)
