@@ -276,73 +276,74 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
 
-    # Create a local session to run this computation.
-    with tf.Session() as s:
+    init = tf.global_variables_initializer();
 
-        if RESTORE_MODEL:
-            # Restore variables from disk.
-            saver.restore(s, FLAGS.train_dir + "/model.ckpt")
-            print("Model restored.")
+    s = tf.Session()
+    if RESTORE_MODEL:
+        # Restore variables from disk.
+        saver.restore(s, FLAGS.train_dir + "/model.ckpt")
+        print("Model restored.")
 
-        else:
-            # Run all the initializers to prepare the trainable parameters.
-            tf.initialize_all_variables().run()
+    else:
+        # Run all the initializers to prepare the trainable parameters.
+        #tf.initialize_all_variables().run()
+        s.run(init)
 
-            # Build the summary operation based on the TF collection of Summaries.
-            summary_op = tf.merge_all_summaries()
-            summary_writer = tf.train.SummaryWriter(FLAGS.train_dir,
-                                                    graph_def=s.graph_def)
-            print('Initialized!')
-            # Loop through training steps.
-            print('Total number of iterations = ' + str(int(num_epochs * train_size / BATCH_SIZE)))
+        # Build the summary operation based on the TF collection of Summaries.
+        summary_op = tf.merge_all_summaries()
+        summary_writer = tf.train.SummaryWriter(FLAGS.train_dir,
+                                                graph=s.graph)
+        print('Initialized!')
+        # Loop through training steps.
+        print('Total number of iterations = ' + str(int(num_epochs * train_size / BATCH_SIZE)))
 
-            training_indices = range(train_size)
+        training_indices = range(train_size)
 
-            for iepoch in range(num_epochs):
+        for iepoch in range(num_epochs):
 
-                # Permute training indices
-                perm_indices = numpy.random.permutation(training_indices)
+            # Permute training indices
+            perm_indices = numpy.random.permutation(training_indices)
 
-                for step in range(int(train_size / BATCH_SIZE)):
+            for step in range(int(train_size / BATCH_SIZE)):
 
-                    offset = (step * BATCH_SIZE) % (train_size - BATCH_SIZE)
-                    batch_indices = perm_indices[offset:(offset + BATCH_SIZE)]
+                offset = (step * BATCH_SIZE) % (train_size - BATCH_SIZE)
+                batch_indices = perm_indices[offset:(offset + BATCH_SIZE)]
 
-                    # Compute the offset of the current minibatch in the data.
-                    # Note that we could use better randomization across epochs.
-                    batch_data = train_data[batch_indices, :, :, :]
-                    batch_labels = train_labels[batch_indices]
-                    # This dictionary maps the batch data (as a numpy array) to the
-                    # node in the graph is should be fed to.
-                    feed_dict = {train_data_node: batch_data,
-                                 train_labels_node: batch_labels}
+                # Compute the offset of the current minibatch in the data.
+                # Note that we could use better randomization across epochs.
+                batch_data = train_data[batch_indices, :, :, :]
+                batch_labels = train_labels[batch_indices]
+                # This dictionary maps the batch data (as a numpy array) to the
+                # node in the graph is should be fed to.
+                feed_dict = {train_data_node: batch_data,
+                             train_labels_node: batch_labels}
 
-                    if step % RECORDING_STEP == 0:
+                if step % RECORDING_STEP == 0:
 
-                        summary_str, _, l, lr, predictions = s.run(
-                            [summary_op, optimizer, loss, learning_rate, train_prediction],
-                            feed_dict=feed_dict)
-                        # summary_str = s.run(summary_op, feed_dict=feed_dict)
-                        summary_writer.add_summary(summary_str, step)
-                        summary_writer.flush()
+                    summary_str, _, l, lr, predictions = s.run(
+                        [summary_op, optimizer, loss, learning_rate, train_prediction],
+                        feed_dict=feed_dict)
+                    # summary_str = s.run(summary_op, feed_dict=feed_dict)
+                    summary_writer.add_summary(summary_str, step)
+                    summary_writer.flush()
 
-                        # print_predictions(predictions, batch_labels)
+                    # print_predictions(predictions, batch_labels)
 
-                        print('%.2f' % (float(step) * BATCH_SIZE / train_size) + '% of Epoch ' + str(iepoch))
-                        print('Minibatch loss: %.3f, learning rate: %.6f' % (l, lr))
-                        print('Minibatch error: %.1f%%' % error_rate(predictions,
-                                                                     batch_labels))
+                    print('%.2f' % (float(step) * BATCH_SIZE / train_size) + '% of Epoch ' + str(iepoch))
+                    print('Minibatch loss: %.3f, learning rate: %.6f' % (l, lr))
+                    print('Minibatch error: %.1f%%' % error_rate(predictions,
+                                                                 batch_labels))
 
-                        sys.stdout.flush()
-                    else:
-                        # Run the graph and fetch some of the nodes.
-                        _, l, lr, predictions = s.run(
-                            [optimizer, loss, learning_rate, train_prediction],
-                            feed_dict=feed_dict)
+                    sys.stdout.flush()
+                else:
+                    # Run the graph and fetch some of the nodes.
+                    _, l, lr, predictions = s.run(
+                        [optimizer, loss, learning_rate, train_prediction],
+                        feed_dict=feed_dict)
 
-                # Save the variables to disk.
-                save_path = saver.save(s, FLAGS.train_dir + "/model.ckpt")
-                print("Model saved in file: %s" % save_path)
+            # Save the variables to disk.
+            save_path = saver.save(s, FLAGS.train_dir + "/model.ckpt")
+            print("Model saved in file: %s" % save_path)
 
         if TRAIN_PREDICTIONS:
             print("Running prediction on training set")
@@ -372,6 +373,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             oimg = get_prediction_with_overlay(test_data_filename, i)
             oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
+    s.close()
 
 if __name__ == '__main__':
     tf.app.run()
