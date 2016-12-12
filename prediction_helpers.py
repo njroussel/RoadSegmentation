@@ -29,7 +29,7 @@ def get_image_summary_3d(img):
 
 
 # Get a concatenation of the prediction and groundtruth for given input file
-def get_prediction_with_groundtruth(filename, image_idx, s, model, file_regex):
+def get_prediction_with_groundtruth(filename, image_idx, s, model, file_regex, means, stds):
     imageid = file_regex % image_idx
     image_filename = filename + imageid + ".png"
     img = mpimg.imread(image_filename)
@@ -37,13 +37,14 @@ def get_prediction_with_groundtruth(filename, image_idx, s, model, file_regex):
     if len(tmp.shape) == 3:
         img = img[:, :, :3]
 
-    img_prediction = get_prediction(img, s, model)
+    img_prediction = get_prediction(img, s, model, means, stds)
     return img_float_to_uint8(img_prediction)
 
 
 # Get prediction for given input image
-def get_prediction(img, s, model):
+def get_prediction(img, s, model, means, stds):
     data = numpy.asarray(img_crop(img, IMG_PATCH_SIZE, IMG_PATCH_SIZE, border=IMG_BORDER))
+    data, _, _ = standardize(data, means, stds)
     data_node = tf.constant(data)
     output = tf.nn.softmax(model(data_node))
     output_prediction = s.run(output)
@@ -62,7 +63,7 @@ def get_prediction_from_patches(patches, s, model):
 
 
 # Get prediction overlaid on the original image for given input file
-def get_prediction_with_overlay(filename, image_idx, s, model, file_regex):
+def get_prediction_with_overlay(filename, image_idx, s, model, file_regex, means, stds):
     imageid = file_regex % image_idx
     image_filename = filename + imageid + ".png"
     img = mpimg.imread(image_filename)
@@ -70,7 +71,7 @@ def get_prediction_with_overlay(filename, image_idx, s, model, file_regex):
     if len(tmp.shape) == 3:
         img = img[:, :, :3]
 
-    img_prediction = get_prediction(img, s, model)
+    img_prediction = get_prediction(img, s, model, means, stds)
     oimg = make_img_overlay(img, img_prediction)
 
     return oimg
