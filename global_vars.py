@@ -10,7 +10,7 @@ TRAIN_PREDICTIONS = False  # If True, restore existing model instead of training
 TEST_PREDICTIONS = True
 ENABLE_RECORDING = False
 RECORDING_STEP = 1000
-LEARNING_RATE = 0.0001
+LEARNING_RATE = 0.00001
 
 # Set image patch size in pixels
 # IMG_PATCH_SIZE should be a multiple of 4
