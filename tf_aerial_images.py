@@ -105,15 +105,27 @@ def main(argv=None):  # pylint: disable=unused-argument
     # initial value which will be assigned when when we call:
     # {tf.initialize_all_variables().run()}
     conv1_weights = tf.Variable(
-        tf.truncated_normal([5, 5, NUM_CHANNELS, 32],  # 5x5 filter, depth 32.
+        tf.truncated_normal([3, 3, NUM_CHANNELS, 32],  # 5x5 filter, depth 32.
                             stddev=0.1,
                             seed=SEED))
     conv1_biases = tf.Variable(tf.zeros([32]))
     conv2_weights = tf.Variable(
-        tf.truncated_normal([5, 5, 32, 64],
+        tf.truncated_normal([3, 3, 32, 64],
                             stddev=0.1,
                             seed=SEED))
     conv2_biases = tf.Variable(tf.constant(0.1, shape=[64]))
+
+    # conv3_weights = tf.Variable(
+    #     tf.truncated_normal([3, 3, 64, 128],
+    #                         stddev=0.1,
+    #                         seed=SEED))
+    # conv3_biases = tf.Variable(tf.constant(0.1, shape=[128]))
+    # conv4_weights = tf.Variable(
+    #     tf.truncated_normal([3, 3, 128, 256],
+    #                         stddev=0.1,
+    #                         seed=SEED))
+    # conv4_biases = tf.Variable(tf.constant(0.1, shape=[256]))
+
     fc1_weights = tf.Variable(  # fully connected, depth 512.
         tf.truncated_normal([int(IMG_TOTAL_SIZE / 4 * IMG_TOTAL_SIZE / 4 * 64), 512],
                             stddev=0.1,
@@ -155,6 +167,27 @@ def main(argv=None):  # pylint: disable=unused-argument
                                strides=[1, 2, 2, 1],
                                padding='SAME')
 
+        # Multiple layers disabled for know
+        # conv3 = tf.nn.conv2d(pool2,
+        #                      conv3_weights,
+        #                      strides=[1, 1, 1, 1],
+        #                      padding='SAME')
+        # relu3 = tf.nn.relu(tf.nn.bias_add(conv3, conv3_biases))
+        # pool3 = tf.nn.max_pool(relu3,
+        #                        ksize=[1, 2, 2, 1],
+        #                        strides=[1, 2, 2, 1],
+        #                        padding='SAME')
+        
+        # conv4 = tf.nn.conv2d(relu3,
+        #                      conv4_weights,
+        #                      strides=[1, 1, 1, 1],
+        #                      padding='SAME')
+        # relu4 = tf.nn.relu(tf.nn.bias_add(conv4, conv4_biases))
+        # pool4 = tf.nn.max_pool(relu4,
+        #                        ksize=[1, 2, 2, 1],
+        #                        strides=[1, 2, 2, 1],
+        #                        padding='SAME')
+
         # Uncomment these lines to check the size of each layer
         # print 'data ' + str(data.get_shape())
         # print 'conv ' + str(conv.get_shape())
@@ -169,6 +202,8 @@ def main(argv=None):  # pylint: disable=unused-argument
         reshape = tf.reshape(
             pool2,
             [pool_shape[0], pool_shape[1] * pool_shape[2] * pool_shape[3]])
+
+        print(pool_shape)
         # Fully connected layer. Note that the '+' operation automatically
         # broadcasts the biases.
         hidden = tf.nn.relu(tf.matmul(reshape, fc1_weights) + fc1_biases)
@@ -222,7 +257,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     batch = tf.Variable(0)
     # Decay once per epoch, using an exponential schedule starting at 0.01.
     learning_rate = tf.train.exponential_decay(
-        0.01,  # Base learning rate.
+        LEARNING_RATE,  # Base learning rate.
         batch * BATCH_SIZE,  # Current index into the dataset.
         train_size,  # Decay step.
         0.95,  # Decay rate.
