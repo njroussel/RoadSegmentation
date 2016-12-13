@@ -26,7 +26,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Extract it into numpy arrays.
     FILE_REGEX = "satImage_%.3d"
 
-    train_images, label_imags = read_rotate_images(train_data_filename, train_labels_filename)
+    train_images, label_images = read_rotate_images(train_data_filename, train_labels_filename, FILE_REGEX)
     data = extract_data(train_images, border=IMG_BORDER)
     labels = extract_labels(label_images)
 
