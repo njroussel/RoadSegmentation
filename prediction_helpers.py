@@ -80,9 +80,13 @@ def get_prediction(img, s, model, means, stds):
 
 def get_prediction_from_patches(patches, s, model):
     data = numpy.asarray(patches)
-    data_node = tf.constant(data)
+    
+    data_node = tf.placeholder(
+        tf.float32, 
+        shape=(EVAL_BATCH_SIZE, IMG_TOTAL_SIZE, IMG_TOTAL_SIZE, NUM_CHANNELS))
+
     output = tf.nn.softmax(model(data_node))
-    output_prediction = s.run(output)
+    output_prediction = eval_in_batches(data, s, output, data_node)
     return output_prediction
     # img_prediction = label_to_img(img.shape[0], img.shape[1], IMG_PATCH_SIZE, IMG_PATCH_SIZE, output_prediction)
     # return img_prediction
