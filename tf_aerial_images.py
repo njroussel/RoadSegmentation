@@ -105,22 +105,22 @@ def main(argv=None):  # pylint: disable=unused-argument
     # initial value which will be assigned when when we call:
     # {tf.initialize_all_variables().run()}
     conv1_weights = tf.Variable(
-        tf.truncated_normal([5, 5, NUM_CHANNELS, 32],  # 5x5 filter, depth 32.
+        tf.truncated_normal([3, 3, NUM_CHANNELS, 32],  # 5x5 filter, depth 32.
                             stddev=0.1,
                             seed=SEED))
     conv1_biases = tf.Variable(tf.zeros([32]))
     conv2_weights = tf.Variable(
-        tf.truncated_normal([5, 5, 32, 64],
+        tf.truncated_normal([3, 3, 32, 64],
                             stddev=0.1,
                             seed=SEED))
     conv2_biases = tf.Variable(tf.constant(0.1, shape=[64]))
     conv3_weights = tf.Variable(
-        tf.truncated_normal([5, 5, 64, 128],
+        tf.truncated_normal([3, 3, 64, 128],
                             stddev=0.1,
                             seed=SEED))
     conv3_biases = tf.Variable(tf.constant(0.1, shape=[128]))
     conv4_weights = tf.Variable(
-        tf.truncated_normal([5, 5, 128, 256],
+        tf.truncated_normal([3, 3, 128, 256],
                             stddev=0.1,
                             seed=SEED))
     conv4_biases = tf.Variable(tf.constant(0.1, shape=[256]))
