@@ -191,6 +191,13 @@ def F1_score(predictions, labels):
     # False negative
     FN = numpy.sum(numpy.argmax(false_prediction, axis=1) == 0)
 
+    print(predictions)
+    print("""""""""""")
+    print(labels)
+    print("""""""""""")
+    print(valid_prediction.shape)
+    print(false_prediction.shape)
+
     precision = TP / (FP + TP)
     recall = TP / (FN + TP)
 
