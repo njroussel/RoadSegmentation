@@ -318,8 +318,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     tf.scalar_summary('learning_rate', learning_rate)
 
     # Use simple momentum for the optimization.
-    optimizer = tf.train.MomentumOptimizer(learning_rate,
-                                           0.0).minimize(loss,
+    optimizer = tf.train.AdamOptimizer(LEARNING_RATE).minimize(loss,
                                                          global_step=batch)
 
     # Predictions for the minibatch, validation set and test set.
