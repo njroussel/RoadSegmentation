@@ -26,64 +26,50 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Extract it into numpy arrays.
     FILE_REGEX = "satImage_%.3d"
 
-    train_images, label_images = read_rotate_images(train_data_filename, train_labels_filename, TRAINING_SIZE,
-                                                    FILE_REGEX)
-    data = extract_data(train_images, border=IMG_BORDER)
-    labels = extract_labels(label_images)
+    sat_images, label_images = read_images(train_data_filename, train_labels_filename, TRAINING_SIZE,
+                                           FILE_REGEX)
 
-    num_epochs = NUM_EPOCHS
-
-    # Count class population.
-    c0 = 0
-    c1 = 0
-    for i in range(len(labels)):
-        if labels[i][0] == 1:
-            c0 = c0 + 1
-        else:
-            c1 = c1 + 1
-    print('Number of data points per class: c0 = ' + str(c0) + ' c1 = ' + str(c1))
-
-    # Make populations even.
-    print('Balancing training data...')
-    min_c = min(c0, c1)
-    idx0 = [i for i, j in enumerate(labels) if j[0] == 1]
-    idx1 = [i for i, j in enumerate(labels) if j[1] == 1]
-    new_indices = idx0[0:min_c] + idx1[0:min_c]
-    print(len(new_indices))
-    print(data.shape)
-    data = data[new_indices, :, :, :]
-    labels = labels[new_indices]
-
-    c0 = 0
-    c1 = 0
-    for i in range(len(labels)):
-        if labels[i][0] == 1:
-            c0 = c0 + 1
-        else:
-            c1 = c1 + 1
-    print('Number of data points per class: c0 = ' + str(c0) + ' c1 = ' + str(c1))
-
-    perm_indices = numpy.random.permutation(range(data.shape[0]))
+    perm_indices = numpy.random.permutation(range(sat_images.shape[0]))
     train_limit = int(VALIDATION_TRAIN_PERC * len(perm_indices))
     val_limit = int(VALIDATION_VAL_PERC * len(perm_indices))
 
-    train_data = data[perm_indices[0:train_limit]]
+    train_data = sat_images[perm_indices[0:train_limit]]
     train_data, means, stds = standardize(train_data)
-    train_labels = labels[perm_indices[0:train_limit]]
+    train_labels = label_images[perm_indices[0:train_limit]]
     train_size = train_labels.shape[0]
 
-    validation_data = data[perm_indices[train_limit:train_limit + val_limit]]
+    validation_data = sat_images[perm_indices[train_limit:train_limit + val_limit]]
     validation_data, _, _ = standardize(validation_data, means=means, stds=stds)
-    validation_labels = labels[perm_indices[train_limit:train_limit + val_limit]]
+    validation_labels = label_images[perm_indices[train_limit:train_limit + val_limit]]
 
-    test_data = data[perm_indices[train_limit + val_limit:]]
+    test_data = sat_images[perm_indices[train_limit + val_limit:]]
     test_data, _, _ = standardize(test_data, means=means, stds=stds)
-    test_labels = labels[perm_indices[train_limit + val_limit:]]
+    test_labels = label_images[perm_indices[train_limit + val_limit:]]
+
+    if ROTATE_IMAGES:
+        for i in range(train_data.shape[0]):
+            angle = numpy.random.rand() * 360
+            train_data[i] = rotate_image(train_data[i], angle)
+            train_labels[i] = rotate_image(train_labels[i], angle)
+
+    train_data = extract_data(train_data, border=IMG_BORDER)
+    train_labels = extract_labels(train_labels)
+
+    validation_data = extract_data(validation_data, border=IMG_BORDER)
+    validation_labels = extract_labels(validation_labels)
+
+    test_data = extract_data(test_data, border=IMG_BORDER)
+    test_labels = extract_labels(test_labels)
+
+    num_epochs = NUM_EPOCHS
+
+    train_data, train_labels = balance_data(train_data, train_labels)
+    validation_data, validation_labels = balance_data(validation_data, validation_labels)
+    test_data, test_labels = balance_data(test_data, test_labels)
 
     print("After evening size = {}".format(train_size))
 
     print("### validation sizes ###")
-    print("Data size = {}".format(data.shape[0]))
     print("train_data = {}".format(train_data.shape))
     print("train_labels = {}".format(train_labels.shape))
     print("validation_data = {}".format(validation_data.shape))
@@ -110,7 +96,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     prev_depth = NUM_CHANNELS
     for i, n_conv in enumerate(CONV_ARCH):
         conv_params[i] = [None] * n_conv
-        new_depth = 32 * 2**i
+        new_depth = 32 * 2 ** i
         for layer in range(n_conv):
             conv_weights = tf.Variable(
                 tf.truncated_normal(
@@ -121,7 +107,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             conv_params[i][layer] = (conv_weights, conv_biases)
             prev_depth = new_depth
 
-    pool_fact = 2**len(CONV_ARCH)
+    pool_fact = 2 ** len(CONV_ARCH)
 
     if IMG_TOTAL_SIZE % pool_fact != 0:
         raise "not dividable by pool fact " + str(IMG_TOTAL_SIZE) + " / " + str(pool_fact)
@@ -151,7 +137,6 @@ def main(argv=None):  # pylint: disable=unused-argument
         for i, n_conv in enumerate(CONV_ARCH):
 
             for layer in range(n_conv):
-
                 # 2D convolution
                 conv = tf.nn.conv2d(
                     prev_layer,

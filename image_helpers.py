@@ -8,12 +8,33 @@ from scipy import ndimage
 from global_vars import *
 
 
+def balance_data(patches, labels):
+    c0 = 0
+    c1 = 0
+    for i in range(len(labels)):
+        if labels[i][0] == 1:
+            c0 += 1
+        else:
+            c1 += 1
+
+    # Make populations even.
+    min_c = min(c0, c1)
+    idx0 = [i for i, j in enumerate(labels) if j[0] == 1]
+    idx1 = [i for i, j in enumerate(labels) if j[1] == 1]
+    new_indices = idx0[0:min_c] + idx1[0:min_c]
+    print(len(new_indices))
+    print(patches.shape)
+    patches = patches[new_indices, :, :, :]
+    labels = labels[new_indices]
+    return patches, labels
+
+
 def rotate_image(image, angle):
     rotated_image = ndimage.rotate(image, angle, mode='reflect', order=0, reshape=False)
     return rotated_image
 
 
-def read_rotate_images(train_filename, label_filename, num_images, file_regex):
+def read_images(train_filename, label_filename, num_images, file_regex):
     train_images = []
     label_images = []
 
@@ -23,38 +44,32 @@ def read_rotate_images(train_filename, label_filename, num_images, file_regex):
         label_image_filename = label_filename + imageid + ".png"
 
         if os.path.isfile(train_image_filename) and os.path.isfile(label_image_filename):
-            angle = numpy.random.rand() * 360
-
             print('Loading ' + train_image_filename)
             img = mpimg.imread(train_image_filename)
             tmp = numpy.array(img)
             if len(tmp.shape) == 3:
                 img = img[:, :, :3]
-            if ROTATE_IMAGES:
-                img = rotate_image(img, angle)
             train_images.append(img)
 
             print('Loading ' + label_image_filename)
             img = mpimg.imread(label_image_filename)
-            if ROTATE_IMAGES:
-                img = rotate_image(img, angle)
             label_images.append(img)
         else:
             print('File ' + train_image_filename + ' does not exist')
             print('OR')
             print('File ' + label_image_filename + ' does not exist')
 
-    return train_images, label_images
+    return numpy.array(train_images), numpy.array(label_images)
 
 
-def standardize(patches, means=None, stds=None):
+def standardize(images, means=None, stds=None):
     """ Standardize a group of patches.
         Returns std_patches, means, stds.
-            @param patches : Patches to standardize.
+            @param images : Patches to standardize.
     """
-    r_layer = patches[:, :, :, 0]
-    g_layer = patches[:, :, :, 1]
-    b_layer = patches[:, :, :, 2]
+    r_layer = images[:, :, :, 0]
+    g_layer = images[:, :, :, 1]
+    b_layer = images[:, :, :, 2]
 
     if means is None:
         r_mean = numpy.mean(r_layer)
