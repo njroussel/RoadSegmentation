@@ -25,8 +25,10 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     # Extract it into numpy arrays.
     FILE_REGEX = "satImage_%.3d"
-    data = extract_data(train_data_filename, TRAINING_SIZE, FILE_REGEX, border=IMG_BORDER)
-    labels = extract_labels(train_labels_filename, TRAINING_SIZE, FILE_REGEX)
+
+    train_images, label_imags = read_rotate_images(train_data_filename, train_labels_filename)
+    data = extract_data(train_images, border=IMG_BORDER)
+    labels = extract_labels(label_images)
 
     num_epochs = NUM_EPOCHS
 
