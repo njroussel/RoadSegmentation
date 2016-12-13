@@ -30,12 +30,14 @@ def read_rotate_images(train_filename, label_filename, num_images, file_regex):
             tmp = numpy.array(img)
             if len(tmp.shape) == 3:
                 img = img[:, :, :3]
-            img = rotate_image(img, angle)
+            if ROTATE_IMAGES:
+                img = rotate_image(img, angle)
             train_images.append(img)
 
             print('Loading ' + label_image_filename)
             img = mpimg.imread(label_image_filename)
-            img = rotate_image(img, angle)
+            if ROTATE_IMAGES:
+                img = rotate_image(img, angle)
             label_images.append(img)
         else:
             print('File ' + train_image_filename + ' does not exist')
@@ -100,7 +102,7 @@ def img_crop(im, w, h, border=0):
     is_2d = len(im.shape) < 3
 
     if (border != 0):
-        im = numpy.array([numpy.pad(im[:, :, i], ((border, border), (border, border)), 'symmetry').T
+        im = numpy.array([numpy.pad(im[:, :, i], ((border, border), (border, border)), 'symmetric').T
                           for i in range(3)
                           ]).T
 
