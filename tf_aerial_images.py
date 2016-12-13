@@ -104,60 +104,74 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     train_all_data_node = tf.constant(train_data)
 
-    # The variables below hold all the trainable weights. They are passed an
-    # initial value which will be assigned when when we call:
-    # {tf.initialize_all_variables().run()}
-    conv1_weights = tf.Variable(
-        tf.truncated_normal([5, 5, NUM_CHANNELS, 32],  # 5x5 filter, depth 32.
-                            stddev=0.1,
-                            seed=SEED))
-    conv1_biases = tf.Variable(tf.zeros([32]))
-    conv2_weights = tf.Variable(
-        tf.truncated_normal([5, 5, 32, 64],
-                            stddev=0.1,
-                            seed=SEED))
-    conv2_biases = tf.Variable(tf.constant(0.1, shape=[64]))
+    # init weights
+    conv_params = [None] * len(CONV_ARCH)
+
+    prev_depth = NUM_CHANNELS
+    for i, n_conv in enumerate(CONV_ARCH):
+        conv_params[i] = [None] * n_conv
+        new_depth = 32 * 2**i
+        for layer in range(n_conv):
+            conv_weights = tf.Variable(
+                tf.truncated_normal(
+                    [3, 3, prev_depth, new_depth],  # 3x3 filter, depth augmenting by few steps.
+                    stddev=0.1,
+                    seed=SEED))
+            conv_biases = tf.Variable(tf.zeros([new_depth]))
+            conv_params[i][layer] = (conv_weights, conv_biases)
+            prev_depth = new_depth
+
+    pool_fact = 2**len(CONV_ARCH)
+
+    if IMG_TOTAL_SIZE % pool_fact != 0:
+        raise "not dividable by pool fact " + str(IMG_TOTAL_SIZE) + " / " + str(pool_fact)
+
+    size = int(IMG_TOTAL_SIZE / pool_fact * IMG_TOTAL_SIZE / pool_fact * new_depth)
+
     fc1_weights = tf.Variable(  # fully connected, depth 512.
-        tf.truncated_normal([int(IMG_TOTAL_SIZE / 4 * IMG_TOTAL_SIZE / 4 * 64), 512],
-                            stddev=0.1,
-                            seed=SEED))
+        tf.truncated_normal(
+            [size, 512],
+            stddev=0.1,
+            seed=SEED))
     fc1_biases = tf.Variable(tf.constant(0.1, shape=[512]))
+
     fc2_weights = tf.Variable(
-        tf.truncated_normal([512, NUM_LABELS],
-                            stddev=0.1,
-                            seed=SEED))
+        tf.truncated_normal(
+            [512, NUM_LABELS],
+            stddev=0.1,
+            seed=SEED))
     fc2_biases = tf.Variable(tf.constant(0.1, shape=[NUM_LABELS]))
 
     # We will replicate the model structure for the training subgraph, as well
     # as the evaluation subgraphs, while sharing the trainable parameters.
     def model(data, train=False):
         """The Model definition."""
-        # 2D convolution, with 'SAME' padding (i.e. the output feature map has
-        # the same size as the input). Note that {strides} is a 4D array whose
-        # shape matches the data layout: [image index, y, x, depth].
-        conv = tf.nn.conv2d(data,
-                            conv1_weights,
-                            strides=[1, 1, 1, 1],
-                            padding='SAME')
-        # Bias and rectified linear non-linearity.
-        relu = tf.nn.relu(tf.nn.bias_add(conv, conv1_biases))
-        # Max pooling. The kernel size spec {ksize} also follows the layout of
-        # the data. Here we have a pooling window of 2, and a stride of 2.
-        pool = tf.nn.max_pool(relu,
-                              ksize=[1, 2, 2, 1],
-                              strides=[1, 2, 2, 1],
-                              padding='SAME')
 
-        conv2 = tf.nn.conv2d(pool,
-                             conv2_weights,
-                             strides=[1, 1, 1, 1],
-                             padding='SAME')
-        relu2 = tf.nn.relu(tf.nn.bias_add(conv2, conv2_biases))
-        pool2 = tf.nn.max_pool(relu2,
-                               ksize=[1, 2, 2, 1],
-                               strides=[1, 2, 2, 1],
-                               padding='SAME')
+        prev_layer = data
+        for i, n_conv in enumerate(CONV_ARCH):
 
+            for layer in range(n_conv):
+
+                # 2D convolution
+                conv = tf.nn.conv2d(
+                    prev_layer,
+                    conv_params[i][layer][0],
+                    strides=[1, 1, 1, 1],
+                    padding='SAME')
+
+                # Bias and rectified linear non-linearity.
+                relu = tf.nn.relu(tf.nn.bias_add(conv, conv_params[i][layer][1]))
+                prev_layer = relu
+
+            prev_layer = tf.nn.max_pool(
+                prev_layer,
+                ksize=[1, 2, 2, 1],
+                strides=[1, 2, 2, 1],
+                padding='SAME')
+
+        last_layer = prev_layer
+
+        # TODO : Needs to be written differently for new layer system
         # Uncomment these lines to check the size of each layer
         # print 'data ' + str(data.get_shape())
         # print 'conv ' + str(conv.get_shape())
@@ -168,10 +182,12 @@ def main(argv=None):  # pylint: disable=unused-argument
 
         # Reshape the feature map cuboid into a 2D matrix to feed it to the
         # fully connected layers.
-        pool_shape = pool2.get_shape().as_list()
+        last_layer_shape = last_layer.get_shape().as_list()
         reshape = tf.reshape(
-            pool2,
-            [pool_shape[0], pool_shape[1] * pool_shape[2] * pool_shape[3]])
+            last_layer,
+            [last_layer_shape[0], last_layer_shape[1] * last_layer_shape[2] * last_layer_shape[3]])
+
+        print(last_layer_shape)
         # Fully connected layer. Note that the '+' operation automatically
         # broadcasts the biases.
         hidden = tf.nn.relu(tf.matmul(reshape, fc1_weights) + fc1_biases)
@@ -181,38 +197,44 @@ def main(argv=None):  # pylint: disable=unused-argument
             hidden = tf.nn.dropout(hidden, 0.5, seed=SEED)
         out = tf.matmul(hidden, fc2_weights) + fc2_biases
 
-        if train == True:
-            summary_id = '_0'
-            s_data = get_image_summary(data)
-            filter_summary0 = tf.image_summary('summary_data' + summary_id, s_data)
-            s_conv = get_image_summary(conv)
-            filter_summary2 = tf.image_summary('summary_conv' + summary_id, s_conv)
-            s_pool = get_image_summary(pool)
-            filter_summary3 = tf.image_summary('summary_pool' + summary_id, s_pool)
-            s_conv2 = get_image_summary(conv2)
-            filter_summary4 = tf.image_summary('summary_conv2' + summary_id, s_conv2)
-            s_pool2 = get_image_summary(pool2)
-            filter_summary5 = tf.image_summary('summary_pool2' + summary_id, s_pool2)
+        # TODO : Needs to be written differently for new layer system
+        # if train == True:
+        #     summary_id = '_0'
+        #     s_data = get_image_summary(data)
+        #     filter_summary0 = tf.image_summary('summary_data' + summary_id, s_data)
+        #     s_conv = get_image_summary(conv)
+        #     filter_summary2 = tf.image_summary('summary_conv' + summary_id, s_conv)
+        #     s_pool = get_image_summary(pool)
+        #     filter_summary3 = tf.image_summary('summary_pool' + summary_id, s_pool)
+        #     s_conv2 = get_image_summary(conv2)
+        #     filter_summary4 = tf.image_summary('summary_conv2' + summary_id, s_conv2)
+        #     s_pool2 = get_image_summary(pool2)
+        #     filter_summary5 = tf.image_summary('summary_pool2' + summary_id, s_pool2)
 
         return out
 
     # Training computation: logits + cross-entropy loss.
+
     logits = model(train_data_node, True)  # BATCH_SIZE*NUM_LABELS
-    # print 'logits = ' + str(logits.get_shape()) + ' train_labels_node = ' + str(train_labels_node.get_shape())
+
+    # print('logits = ' + str(logits.get_shape()))
+    # print('train_labels_node = ' + str(train_labels_node.get_shape()))
+
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
         logits, train_labels_node))
     tf.scalar_summary('loss', loss)
 
-    all_params_node = [conv1_weights, conv1_biases, conv2_weights, conv2_biases, fc1_weights, fc1_biases, fc2_weights,
-                       fc2_biases]
-    all_params_names = ['conv1_weights', 'conv1_biases', 'conv2_weights', 'conv2_biases', 'fc1_weights', 'fc1_biases',
-                        'fc2_weights', 'fc2_biases']
-    all_grads_node = tf.gradients(loss, all_params_node)
-    all_grad_norms_node = []
-    for i in range(0, len(all_grads_node)):
-        norm_grad_i = tf.global_norm([all_grads_node[i]])
-        all_grad_norms_node.append(norm_grad_i)
-        tf.scalar_summary(all_params_names[i], norm_grad_i)
+    # TODO : Needs to be written differently for new layer system
+    # all_params_node = [conv1_weights, conv1_biases, conv2_weights, conv2_biases, fc1_weights, fc1_biases, fc2_weights,
+    #                    fc2_biases]
+    # all_params_names = ['conv1_weights', 'conv1_biases', 'conv2_weights', 'conv2_biases', 'fc1_weights', 'fc1_biases',
+    #                     'fc2_weights', 'fc2_biases']
+    # all_grads_node = tf.gradients(loss, all_params_node)
+    # all_grad_norms_node = []
+    # for i in range(0, len(all_grads_node)):
+    #     norm_grad_i = tf.global_norm([all_grads_node[i]])
+    #     all_grad_norms_node.append(norm_grad_i)
+    #     tf.scalar_summary(all_params_names[i], norm_grad_i)
 
     # L2 regularization for the fully connected parameters.
     regularizers = (tf.nn.l2_loss(fc1_weights) + tf.nn.l2_loss(fc1_biases) +
@@ -223,19 +245,10 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Optimizer: set up a variable that's incremented once per batch and
     # controls the learning rate decay.
     batch = tf.Variable(0)
-    # Decay once per epoch, using an exponential schedule starting at 0.01.
-    learning_rate = tf.train.exponential_decay(
-        0.01,  # Base learning rate.
-        batch * BATCH_SIZE,  # Current index into the dataset.
-        train_size,  # Decay step.
-        0.95,  # Decay rate.
-        staircase=True)
-    tf.scalar_summary('learning_rate', learning_rate)
 
-    # Use simple momentum for the optimization.
-    optimizer = tf.train.MomentumOptimizer(learning_rate,
-                                           0.0).minimize(loss,
-                                                         global_step=batch)
+    # Use adam optimizer as it optimises automatically the learning rate.
+    adam_opt = tf.train.AdamOptimizer(LEARNING_RATE)
+    optimizer = adam_opt.minimize(loss, global_step=batch)
 
     # Predictions for the minibatch, validation set and test set.
     train_prediction = tf.nn.softmax(logits)
@@ -289,8 +302,8 @@ def main(argv=None):  # pylint: disable=unused-argument
 
                 if step % RECORDING_STEP == 0:
 
-                    summary_str, _, l, lr, predictions = s.run(
-                        [summary_op, optimizer, loss, learning_rate, train_prediction],
+                    summary_str, _, l, predictions = s.run(
+                        [summary_op, optimizer, loss, train_prediction],
                         feed_dict=feed_dict)
                     # summary_str = s.run(summary_op, feed_dict=feed_dict)
                     if ENABLE_RECORDING:
@@ -300,7 +313,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                     # print_predictions(predictions, batch_labels)
 
                     print('%.2f' % (float(step) * BATCH_SIZE / train_size) + '% of Epoch ' + str(iepoch))
-                    print('Minibatch loss: %.3f, learning rate: %.6f' % (l, lr))
+                    print('Minibatch loss: %.3f' % (l))
                     print('Minibatch error: %.1f%%' % error_rate(predictions,
                                                                  batch_labels))
                     print('Minibatch F1 score: %.1f' % F1_score(predictions,
@@ -309,8 +322,8 @@ def main(argv=None):  # pylint: disable=unused-argument
                     sys.stdout.flush()
                 else:
                     # Run the graph and fetch some of the nodes.
-                    _, l, lr, predictions = s.run(
-                        [optimizer, loss, learning_rate, train_prediction],
+                    _, l, predictions = s.run(
+                        [optimizer, loss, train_prediction],
                         feed_dict=feed_dict)
 
             # Save the variables to disk.

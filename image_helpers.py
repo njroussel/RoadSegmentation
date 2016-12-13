@@ -105,12 +105,10 @@ def img_crop(im, w, h, border=0):
         im = numpy.array([numpy.pad(im[:, :, i], ((border, border), (border, border)), 'symmetric').T
                           for i in range(3)
                           ]).T
-
     for i in range(0, imgheight, h):
         for j in range(0, imgwidth, w):
             im_patch = im[j:j + w + 2 * border, i:i + h + 2 * border]
             list_patches.append(im_patch)
-
     return list_patches
 
 
