@@ -8,7 +8,7 @@ from scipy import ndimage
 from global_vars import *
 
 
-def balance_data(patches, labels):
+def balance_data(data, labels):
     c0 = 0
     c1 = 0
     for i in range(len(labels)):
@@ -22,11 +22,9 @@ def balance_data(patches, labels):
     idx0 = [i for i, j in enumerate(labels) if j[0] == 1]
     idx1 = [i for i, j in enumerate(labels) if j[1] == 1]
     new_indices = idx0[0:min_c] + idx1[0:min_c]
-    print(len(new_indices))
-    print(patches.shape)
-    patches = patches[new_indices, :, :, :]
-    labels = labels[new_indices]
-    return patches, labels
+    data = data[new_indices, :, :, :]
+    labels = labels[new_indices, :]
+    return data, labels
 
 
 def rotate_image(image, angle):
@@ -130,8 +128,8 @@ def img_crop(im, w, h, border=0):
 def extract_data(images, border=0):
     """Extract the images into a 4D tensor [image index, y, x, channels].
     Values are rescaled from [0, 255] down to [-0.5, 0.5].
-        @param filename : path to the images.
-        @param num_images : number of images in the folder.
+        @param images : the images.
+        @param border : the border.
     """
     num_images = len(images)
     img_patches = [img_crop(images[i], IMG_PATCH_SIZE, IMG_PATCH_SIZE, border) for i in range(num_images)]
@@ -153,8 +151,7 @@ def value_to_class(v):
 
 def extract_labels(images):
     """ Extract the labels into a 1-hot matrix [image index, label index].
-        @param filename : folder containing images.
-        @param num_images : number of images in that folder.
+        @param images : the images.
     """
     images = images
     num_images = len(images)
@@ -191,12 +188,10 @@ def F1_score(predictions, labels):
     # False negative
     FN = numpy.sum(numpy.argmax(false_prediction, axis=1) == 0)
 
-    print(predictions)
-    print("""""""""""")
-    print(labels)
-    print("""""""""""")
-    print(valid_prediction.shape)
-    print(false_prediction.shape)
+    print(TP)
+    print(TN)
+    print(FP)
+    print(FN)
 
     precision = TP / (FP + TP)
     recall = TP / (FN + TP)

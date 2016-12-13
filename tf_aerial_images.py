@@ -301,7 +301,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                     print('Minibatch loss: %.3f' % (l))
                     print('Minibatch error: %.1f%%' % error_rate(predictions,
                                                                  batch_labels))
-                    print('Minibatch F1 score: %.1f' % F1_score(predictions,
+                    print('Minibatch F1 score: %.3f' % F1_score(predictions,
                                                                 batch_labels))
 
                     sys.stdout.flush()
