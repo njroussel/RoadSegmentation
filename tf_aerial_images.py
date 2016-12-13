@@ -101,6 +101,26 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     train_all_data_node = tf.constant(train_data)
 
+    # init weights
+    conv_arch = [2, 2, 3]
+    # fc_arch = 1
+
+    conv_params = [None] * len(conv_arch)
+
+    prev_depth = NUM_CHANNELS
+    for i, n_conv in enumerate(conv_arch):
+        conv_params[i] = [None] * n_conv
+        new_depth = 32 * 2**i
+        for layer in range(n_conv):
+            conv_weights = tf.Variable(
+                tf.truncated_normal(
+                    [3, 3, prev_depth, new_depth],  # 3x3 filter, depth augmenting by few steps.
+                    stddev=0.1,
+                    seed=SEED))
+            conv_biases = tf.Variable(tf.zeros([new_depth]))
+            conv_params[i][layer] = (conv_weights, conv_biases)
+            prev_depth = new_depth
+
     # The variables below hold all the trainable weights. They are passed an
     # initial value which will be assigned when when we call:
     # {tf.initialize_all_variables().run()}
@@ -126,10 +146,18 @@ def main(argv=None):  # pylint: disable=unused-argument
     #                         seed=SEED))
     # conv4_biases = tf.Variable(tf.constant(0.1, shape=[256]))
 
+    pool_fact = 2**len(conv_arch)
+
+    if IMG_TOTAL_SIZE % pool_fact != 0:
+        raise "not dividable by pool fact " + str(IMG_TOTAL_SIZE) + " / " + str(pool_fact)
+
+    size = int(IMG_TOTAL_SIZE / pool_fact * IMG_TOTAL_SIZE / pool_fact * new_depth)
+
     fc1_weights = tf.Variable(  # fully connected, depth 512.
-        tf.truncated_normal([int(IMG_TOTAL_SIZE / 4 * IMG_TOTAL_SIZE / 4 * 64), 512],
-                            stddev=0.1,
-                            seed=SEED))
+        tf.truncated_normal(
+            [size, 512],
+            stddev=0.1,
+            seed=SEED))
     fc1_biases = tf.Variable(tf.constant(0.1, shape=[512]))
     fc2_weights = tf.Variable(
         tf.truncated_normal([512, NUM_LABELS],
@@ -141,6 +169,31 @@ def main(argv=None):  # pylint: disable=unused-argument
     # as the evaluation subgraphs, while sharing the trainable parameters.
     def model(data, train=False):
         """The Model definition."""
+
+        prev_layer = data
+        for i, n_conv in enumerate(conv_arch):
+
+            for layer in range(n_conv):
+
+                # 2D convolution
+                conv = tf.nn.conv2d(
+                    prev_layer,
+                    conv_params[i][layer][0],
+                    strides=[1, 1, 1, 1],
+                    padding='SAME')
+
+                # Bias and rectified linear non-linearity.
+                relu = tf.nn.relu(tf.nn.bias_add(conv, conv_params[i][layer][1]))
+                prev_layer = relu
+
+            prev_layer = tf.nn.max_pool(
+                prev_layer,
+                ksize=[1, 2, 2, 1],
+                strides=[1, 2, 2, 1],
+                padding='SAME')
+
+        last_layer = prev_layer
+
         # 2D convolution, with 'SAME' padding (i.e. the output feature map has
         # the same size as the input). Note that {strides} is a 4D array whose
         # shape matches the data layout: [image index, y, x, depth].
@@ -177,7 +230,7 @@ def main(argv=None):  # pylint: disable=unused-argument
         #                        ksize=[1, 2, 2, 1],
         #                        strides=[1, 2, 2, 1],
         #                        padding='SAME')
-        
+
         # conv4 = tf.nn.conv2d(relu3,
         #                      conv4_weights,
         #                      strides=[1, 1, 1, 1],
@@ -198,12 +251,12 @@ def main(argv=None):  # pylint: disable=unused-argument
 
         # Reshape the feature map cuboid into a 2D matrix to feed it to the
         # fully connected layers.
-        pool_shape = pool2.get_shape().as_list()
+        last_layer_shape = last_layer.get_shape().as_list()
         reshape = tf.reshape(
-            pool2,
-            [pool_shape[0], pool_shape[1] * pool_shape[2] * pool_shape[3]])
+            last_layer,
+            [last_layer_shape[0], last_layer_shape[1] * last_layer_shape[2] * last_layer_shape[3]])
 
-        print(pool_shape)
+        print(last_layer_shape)
         # Fully connected layer. Note that the '+' operation automatically
         # broadcasts the biases.
         hidden = tf.nn.relu(tf.matmul(reshape, fc1_weights) + fc1_biases)
