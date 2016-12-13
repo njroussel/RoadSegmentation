@@ -15,7 +15,7 @@ RECORDING_STEP = 1000
 LEARNING_RATE = 0.001
 
 # Convolution network architecture
-CONV_ARCH = [2, 2]
+CONV_ARCH = [1, 1]
 
 # Set image patch size in pixels
 # IMG_PATCH_SIZE should be a multiple of 4
