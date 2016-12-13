@@ -14,31 +14,35 @@ def rotate_image(image, angle):
 
 
 def read_rotate_images(train_filename, label_filename, num_images, file_regex):
+    train_images = []
+    label_images = []
+
     for i in range(1, num_images + 1):
         imageid = file_regex % i
-        image_filename = train_filename + imageid + ".png"
-        if os.path.isfile(image_filename):
-            print('Loading ' + image_filename)
-            img = mpimg.imread(image_filename)
+        train_image_filename = train_filename + imageid + ".png"
+        label_image_filename = label_filename + imageid + ".png"
+
+        if os.path.isfile(train_image_filename) and os.path.isfile(label_image_filename):
+            angle = numpy.random.rand() * 360
+
+            print('Loading ' + train_image_filename)
+            img = mpimg.imread(train_image_filename)
             tmp = numpy.array(img)
             if len(tmp.shape) == 3:
                 img = img[:, :, :3]
-            img
-            imgs.append(img)
-        else:
-            print('File ' + image_filename + ' does not exist')
+            img = rotate_image(img, angle)
+            train_images.append(img)
 
-    for i in range(1, num_images + 1):
-        imageid = file_regex % i
-        image_filename = filename + imageid + ".png"
-        if os.path.isfile(image_filename):
-            print('Loading ' + image_filename)
-            img = mpimg.imread(image_filename)
-            gt_imgs.append(img)
+            print('Loading ' + label_image_filename)
+            img = mpimg.imread(label_image_filename)
+            img = rotate_image(img, angle)
+            label_images.append(img)
         else:
-            print('File ' + image_filename + ' does not exist')
+            print('File ' + train_image_filename + ' does not exist')
+            print('OR')
+            print('File ' + label_image_filename + ' does not exist')
 
-    return 1, 2
+    return train_images, label_images
 
 
 def standardize(patches, means=None, stds=None):
@@ -96,8 +100,7 @@ def img_crop(im, w, h, border=0):
     is_2d = len(im.shape) < 3
 
     if (border != 0):
-        im = numpy.array([numpy.pad(im[:, :, i], ((border, border), (border, border)), 'constant',
-                                    constant_values=0).T
+        im = numpy.array([numpy.pad(im[:, :, i], ((border, border), (border, border)), 'symmetry').T
                           for i in range(3)
                           ]).T
 
