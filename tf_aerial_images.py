@@ -32,6 +32,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     # Array containing all f1 score for validation ar each epoch (if enabled)
     f1_validation_per_epoch = []
+    loss_per_recording_step = []
 
     # Extract it into numpy arrays.
     FILE_REGEX = "satImage_%.3d"
@@ -268,6 +269,8 @@ def main(argv=None):  # pylint: disable=unused-argument
 
                         # print_predictions(predictions, batch_labels)
 
+                        loss_per_recording_step.append(l)
+                        print ('loss = ', l)
                         print('%.2f' % (float(step) * BATCH_SIZE / train_size) + '% of Epoch ' + str(iepoch))
 
                         sys.stdout.flush()
@@ -352,6 +355,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     param_file.write("LEARNING_RATE           = {}\n".format(LEARNING_RATE))
     param_file.write("Last epoch              = {}\n".format(iepoch+1))
     param_file.write("Validation F1 per epoch = {}\n".format(f1_validation_per_epoch))
+    param_file.write("Loss per recording step = {}\n".format(loss_per_recording_step))
     param_file.write("Validation F1 score     = {}\n".format(validation_f1_score))
     param_file.write("Test F1 score           = {}\n".format(test_f1_score))
     param_file.write("################################################################################\n")
