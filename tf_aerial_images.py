@@ -30,6 +30,9 @@ def main(argv=None):  # pylint: disable=unused-argument
     test_data_filename = './test_set_images/'
     train_labels_filename = data_dir + 'groundtruth/'
 
+    # Array containing all f1 score for validation ar each epoch (if enabled)
+    f1_validation_per_epoch = []
+
     # Extract it into numpy arrays.
     FILE_REGEX = "satImage_%.3d"
 
@@ -275,7 +278,9 @@ def main(argv=None):  # pylint: disable=unused-argument
                             feed_dict=feed_dict)
                 
                 if COMPUTE_VALIDATION_F1_SCORE_FOR_EACH_EPOCH:
-                    print('For epoch {} : F1 score on validation set = {}'.format(iepoch, validation(validation_data, validation_labels, s, model)))
+                    f1_score_validation = validation(validation_data, validation_labels, s, model)
+                    f1_validation_per_epoch.append(f1_score_validation)
+                    print('For epoch {} : F1 score on validation set = {}'.format(iepoch, f1_score_validation))
 
                 # Save the variables to disk.
                 if ENABLE_RECORDING:
@@ -330,24 +335,25 @@ def main(argv=None):  # pylint: disable=unused-argument
     print("Write run informations to {} file".format(params_file_name))
     param_file = open(params_file_name, 'a')
     param_file.write("On {}:\n".format(time.strftime("%c")))
-    param_file.write("NUM_CHANNELS        = {}\n".format(NUM_CHANNELS))
-    param_file.write("PIXEL_DEPTH         = {}\n".format(PIXEL_DEPTH))
-    param_file.write("NUM_LABELS          = {}\n".format(NUM_LABELS))
-    param_file.write("TRAINING_SIZE       = {}\n".format(TRAINING_SIZE))
-    param_file.write("SEED                = {}\n".format(SEED))
-    param_file.write("EVAL_BATCH_SIZE     = {}\n".format(EVAL_BATCH_SIZE))
-    param_file.write("BATCH_SIZE          = {}\n".format(BATCH_SIZE))
-    param_file.write("NUM_EPOCHS          = {}\n".format(NUM_EPOCHS))
-    param_file.write("ROTATE_IMAGES       = {}\n".format(ROTATE_IMAGES))
-    param_file.write("RESTORE_MODEL       = {}\n".format(RESTORE_MODEL))
-    param_file.write("TRAIN_PREDICTIONS   = {}\n".format(TRAIN_PREDICTIONS))
-    param_file.write("TEST_PREDICTIONS    = {}\n".format(TEST_PREDICTIONS))
-    param_file.write("ENABLE_RECORDING    = {}\n".format(ENABLE_RECORDING))
-    param_file.write("RECORDING_STEP      = {}\n".format(RECORDING_STEP))
-    param_file.write("LEARNING_RATE       = {}\n".format(LEARNING_RATE))
-    param_file.write("Last epoch          = {}\n".format(iepoch+1))
-    param_file.write("Validation F1 score = {}\n".format(validation_f1_score))
-    param_file.write("Test F1 score       = {}\n".format(test_f1_score))
+    param_file.write("NUM_CHANNELS            = {}\n".format(NUM_CHANNELS))
+    param_file.write("PIXEL_DEPTH             = {}\n".format(PIXEL_DEPTH))
+    param_file.write("NUM_LABELS              = {}\n".format(NUM_LABELS))
+    param_file.write("TRAINING_SIZE           = {}\n".format(TRAINING_SIZE))
+    param_file.write("SEED                    = {}\n".format(SEED))
+    param_file.write("EVAL_BATCH_SIZE         = {}\n".format(EVAL_BATCH_SIZE))
+    param_file.write("BATCH_SIZE              = {}\n".format(BATCH_SIZE))
+    param_file.write("NUM_EPOCHS              = {}\n".format(NUM_EPOCHS))
+    param_file.write("ROTATE_IMAGES           = {}\n".format(ROTATE_IMAGES))
+    param_file.write("RESTORE_MODEL           = {}\n".format(RESTORE_MODEL))
+    param_file.write("TRAIN_PREDICTIONS       = {}\n".format(TRAIN_PREDICTIONS))
+    param_file.write("TEST_PREDICTIONS        = {}\n".format(TEST_PREDICTIONS))
+    param_file.write("ENABLE_RECORDING        = {}\n".format(ENABLE_RECORDING))
+    param_file.write("RECORDING_STEP          = {}\n".format(RECORDING_STEP))
+    param_file.write("LEARNING_RATE           = {}\n".format(LEARNING_RATE))
+    param_file.write("Last epoch              = {}\n".format(iepoch+1))
+    param_file.write("Validation F1 per epoch = {}\n".format(f1_validation_per_epoch))
+    param_file.write("Validation F1 score     = {}\n".format(validation_f1_score))
+    param_file.write("Test F1 score           = {}\n".format(test_f1_score))
     param_file.write("################################################################################\n")
     param_file.write("################################################################################\n\n")
     param_file.close()
