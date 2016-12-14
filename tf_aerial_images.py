@@ -36,7 +36,6 @@ def main(argv=None):  # pylint: disable=unused-argument
     train_data = sat_images[perm_indices[0:train_limit]]
     train_data, means, stds = standardize(train_data)
     train_labels = label_images[perm_indices[0:train_limit]]
-    train_size = train_labels.shape[0]
 
     validation_data = sat_images[perm_indices[train_limit:train_limit + val_limit]]
     validation_data, _, _ = standardize(validation_data, means=means, stds=stds)
@@ -64,6 +63,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     num_epochs = NUM_EPOCHS
 
     train_data, train_labels = balance_data(train_data, train_labels)
+    train_size = train_labels.shape[0]
     validation_data, validation_labels = balance_data(validation_data, validation_labels)
     test_data, test_labels = balance_data(test_data, test_labels)
 
