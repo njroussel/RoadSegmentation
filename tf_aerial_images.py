@@ -32,6 +32,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     # Array containing all f1 score for validation ar each epoch (if enabled)
     f1_validation_per_epoch = []
+    f1_training_per_epoch = []
     loss_per_recording_step = []
 
     # Extract it into numpy arrays.
@@ -283,7 +284,10 @@ def main(argv=None):  # pylint: disable=unused-argument
                 if COMPUTE_VALIDATION_F1_SCORE_FOR_EACH_EPOCH:
                     f1_score_validation = validation(validation_data, validation_labels, s, model)
                     f1_validation_per_epoch.append(f1_score_validation)
+                    f1_score_training = validation(train_data, train_labels, s, model)
+                    f1_training_per_epoch.append(f1_score_training)
                     print('For epoch {} : F1 score on validation set = {}'.format(iepoch, f1_score_validation))
+                    print('For epoch {} : F1 score on training set = {}'.format(iepoch, f1_score_training))
 
                 # Save the variables to disk.
                 if ENABLE_RECORDING:
@@ -355,6 +359,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     param_file.write("LEARNING_RATE           = {}\n".format(LEARNING_RATE))
     param_file.write("Last epoch              = {}\n".format(iepoch+1))
     param_file.write("Validation F1 per epoch = {}\n".format(f1_validation_per_epoch))
+    param_file.write("Training F1 per epoch   = {}\n".format(f1_training_per_epoch))
     param_file.write("Loss per recording step = {}\n".format(loss_per_recording_step))
     param_file.write("Validation F1 score     = {}\n".format(validation_f1_score))
     param_file.write("Test F1 score           = {}\n".format(test_f1_score))
