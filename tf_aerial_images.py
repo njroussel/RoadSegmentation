@@ -270,55 +270,60 @@ def main(argv=None):  # pylint: disable=unused-argument
 
         training_indices = range(train_size)
 
-        for iepoch in range(num_epochs):
+        try:
+            for iepoch in range(num_epochs):
 
-            # Permute training indices
-            perm_indices = numpy.random.permutation(training_indices)
+                # Permute training indices
+                perm_indices = numpy.random.permutation(training_indices)
 
-            for step in range(int(train_size / BATCH_SIZE)):
+                for step in range(int(train_size / BATCH_SIZE)):
 
-                offset = (step * BATCH_SIZE) % (train_size - BATCH_SIZE)
-                batch_indices = perm_indices[offset:(offset + BATCH_SIZE)]
+                    offset = (step * BATCH_SIZE) % (train_size - BATCH_SIZE)
+                    batch_indices = perm_indices[offset:(offset + BATCH_SIZE)]
 
-                # Compute the offset of the current minibatch in the data.
-                # Note that we could use better randomization across epochs.
-                batch_data = train_data[batch_indices, :, :, :]
-                batch_labels = train_labels[batch_indices]
-                # This dictionary maps the batch data (as a numpy array) to the
-                # node in the graph is should be fed to.
-                feed_dict = {train_data_node: batch_data,
-                             train_labels_node: batch_labels}
+                    # Compute the offset of the current minibatch in the data.
+                    # Note that we could use better randomization across epochs.
+                    batch_data = train_data[batch_indices, :, :, :]
+                    batch_labels = train_labels[batch_indices]
+                    # This dictionary maps the batch data (as a numpy array) to the
+                    # node in the graph is should be fed to.
+                    feed_dict = {train_data_node: batch_data,
+                                 train_labels_node: batch_labels}
 
-                if step % RECORDING_STEP == 0:
+                    if step % RECORDING_STEP == 0:
 
-                    summary_str, _, l, predictions = s.run(
-                        [summary_op, optimizer, loss, train_prediction],
-                        feed_dict=feed_dict)
-                    # summary_str = s.run(summary_op, feed_dict=feed_dict)
-                    if ENABLE_RECORDING:
-                        summary_writer.add_summary(summary_str, step)
-                        summary_writer.flush()
+                        summary_str, _, l, predictions = s.run(
+                            [summary_op, optimizer, loss, train_prediction],
+                            feed_dict=feed_dict)
+                        # summary_str = s.run(summary_op, feed_dict=feed_dict)
+                        if ENABLE_RECORDING:
+                            summary_writer.add_summary(summary_str, step)
+                            summary_writer.flush()
 
-                    # print_predictions(predictions, batch_labels)
+                        # print_predictions(predictions, batch_labels)
 
-                    print('%.2f' % (float(step) * BATCH_SIZE / train_size) + '% of Epoch ' + str(iepoch))
-                    print('Minibatch loss: %.3f' % (l))
-                    print('Minibatch error: %.1f%%' % error_rate(predictions,
-                                                                 batch_labels))
-                    print('Minibatch F1 score: %.3f' % F1_score(predictions,
-                                                                batch_labels))
+                        print('%.2f' % (float(step) * BATCH_SIZE / train_size) + '% of Epoch ' + str(iepoch))
+                        print('Minibatch loss: %.3f' % (l))
+                        print('Minibatch error: %.1f%%' % error_rate(predictions,
+                                                                     batch_labels))
+                        print('Minibatch F1 score: %.3f' % F1_score(predictions,
+                                                                    batch_labels))
 
-                    sys.stdout.flush()
-                else:
-                    # Run the graph and fetch some of the nodes.
-                    _, l, predictions = s.run(
-                        [optimizer, loss, train_prediction],
-                        feed_dict=feed_dict)
+                        sys.stdout.flush()
+                    else:
+                        # Run the graph and fetch some of the nodes.
+                        _, l, predictions = s.run(
+                            [optimizer, loss, train_prediction],
+                            feed_dict=feed_dict)
 
-            # Save the variables to disk.
-            if ENABLE_RECORDING:
-                save_path = saver.save(s, FLAGS.train_dir + "/model.ckpt")
-                print("Model saved in file: %s" % save_path)
+                # Save the variables to disk.
+                if ENABLE_RECORDING:
+                    save_path = saver.save(s, FLAGS.train_dir + "/model.ckpt")
+                    print("Model saved in file: %s" % save_path)
+
+        except KeyboardInterrupt:
+            print("Interrupted at epoch ", iepoch+1)
+            pass
 
         if TRAIN_PREDICTIONS:
             print("Running prediction on training set")
@@ -381,6 +386,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     param_file.write("ENABLE_RECORDING    = {}\n".format(ENABLE_RECORDING))
     param_file.write("RECORDING_STEP      = {}\n".format(RECORDING_STEP))
     param_file.write("LEARNING_RATE       = {}\n".format(LEARNING_RATE))
+    param_file.write("Last epoch          = {}\n".format(iepoch+1))
     param_file.write("Validation F1 score = {}\n".format(validation_f1_score))
     param_file.write("Test F1 score       = {}\n".format(test_f1_score))
     param_file.write("################################################################################\n")
