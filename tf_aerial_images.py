@@ -169,7 +169,9 @@ def main(argv=None):  # pylint: disable=unused-argument
         if train:
             hidden = tf.nn.dropout(hidden, 0.5, seed=SEED)
         out = tf.matmul(hidden, fc2_weights) + fc2_biases
+        return out
 
+    logits = model(train_data_node, True)  # BATCH_SIZE*NUM_LABELS
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
         logits, train_labels_node))
     tf.scalar_summary('loss', loss)
