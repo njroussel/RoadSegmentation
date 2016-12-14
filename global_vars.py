@@ -1,11 +1,11 @@
 NUM_CHANNELS = 3  # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2
-TRAINING_SIZE = 100
+TRAINING_SIZE = 10
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 64  # 64
 BATCH_SIZE = 64
-NUM_EPOCHS = 20
+NUM_EPOCHS = 2
 ROTATE_IMAGES = True
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
 TRAIN_PREDICTIONS = False  # If True, restore existing model instead of training a new one

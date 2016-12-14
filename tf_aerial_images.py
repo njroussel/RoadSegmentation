@@ -6,6 +6,7 @@ Credits: Aurelien Lucchi, ETH Zürich
 """
 
 import sys
+import time
 
 from prediction_helpers import *
 
@@ -18,6 +19,7 @@ FLAGS = tf.app.flags.FLAGS
 def main(argv=None):  # pylint: disable=unused-argument
     numpy.random.seed(0xDEADBEEF)
 
+    params_file_name = 'runs.txt'
     data_dir = 'training/'
     train_data_filename = data_dir + 'images/'
     test_data_filename = './test_set_images/'
@@ -349,17 +351,42 @@ def main(argv=None):  # pylint: disable=unused-argument
     print("Begin validation")
     # Run Nico's code.
     pred = get_prediction_from_patches(validation_data, s, model)
-    f1_score = F1_score(pred, validation_labels)
-    print("Validation ends : F1 = ", f1_score)
+    validation_f1_score = F1_score(pred, validation_labels)
+    print("Validation ends : F1 = ", validation_f1_score)
 
     print("Run on test set")
     # Run Nico's code.
     pred = get_prediction_from_patches(test_data, s, model)
-    f1_score = F1_score(pred, test_labels)
-    print("Run on test ends : F1 = ", f1_score)
+    test_f1_score = F1_score(pred, test_labels)
+    print("Run on test ends : F1 = ", test_f1_score)
 
     s.close()
 
+    # Writing all params and scores to files
+    print("Write run informations to {} file".format(params_file_name))
+    param_file = open(params_file_name, 'a')
+    param_file.write("On {}:\n".format(time.strftime("%c")))
+    param_file.write("NUM_CHANNELS        = {}\n".format(NUM_CHANNELS))
+    param_file.write("PIXEL_DEPTH         = {}\n".format(PIXEL_DEPTH))
+    param_file.write("NUM_LABELS          = {}\n".format(NUM_LABELS))
+    param_file.write("TRAINING_SIZE       = {}\n".format(TRAINING_SIZE))
+    param_file.write("SEED                = {}\n".format(SEED))
+    param_file.write("EVAL_BATCH_SIZE     = {}\n".format(EVAL_BATCH_SIZE))
+    param_file.write("BATCH_SIZE          = {}\n".format(BATCH_SIZE))
+    param_file.write("NUM_EPOCHS          = {}\n".format(NUM_EPOCHS))
+    param_file.write("ROTATE_IMAGES       = {}\n".format(ROTATE_IMAGES))
+    param_file.write("RESTORE_MODEL       = {}\n".format(RESTORE_MODEL))
+    param_file.write("TRAIN_PREDICTIONS   = {}\n".format(TRAIN_PREDICTIONS))
+    param_file.write("TEST_PREDICTIONS    = {}\n".format(TEST_PREDICTIONS))
+    param_file.write("ENABLE_RECORDING    = {}\n".format(ENABLE_RECORDING))
+    param_file.write("RECORDING_STEP      = {}\n".format(RECORDING_STEP))
+    param_file.write("LEARNING_RATE       = {}\n".format(LEARNING_RATE))
+    param_file.write("Validation F1 score = {}\n".format(validation_f1_score))
+    param_file.write("Test F1 score       = {}\n".format(test_f1_score))
+    param_file.write("################################################################################\n")
+    param_file.write("################################################################################\n\n")
+    param_file.close()
+    print("Done")
 
 if __name__ == '__main__':
     tf.app.run()
