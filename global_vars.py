@@ -1,11 +1,11 @@
 NUM_CHANNELS = 3  # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2
-TRAINING_SIZE = 10
+TRAINING_SIZE = 100
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 64  # 64
 BATCH_SIZE = 64
-NUM_EPOCHS = 2 # Will later be determined by validation.
+NUM_EPOCHS = 100 # Will later be determined by validation.
 ROTATE_IMAGES = False
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
 TRAIN_PREDICTIONS = False  # If True, restore existing model instead of training a new one
@@ -23,13 +23,13 @@ CONV_ARCH = [1, 1]
 IMG_PATCH_SIZE = 16
 
 # Border for enhanced context.
-IMG_BORDER = 4
+IMG_BORDER = 0 # Will be set after archi is found
 
 IMG_TOTAL_SIZE = IMG_PATCH_SIZE + 2 * IMG_BORDER
 
 # Validation parameters:
-VALIDATION_TRAIN_PERC = 0.7
-VALIDATION_VAL_PERC = 0.2
+VALIDATION_TRAIN_PERC = 0.6
+VALIDATION_VAL_PERC = 0.3
 VALIDATION_TEST_PERC = 0.1
 
 # Hyperparameters validation
