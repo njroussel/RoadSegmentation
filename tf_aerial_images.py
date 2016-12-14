@@ -48,8 +48,10 @@ def main(argv=None):  # pylint: disable=unused-argument
     if ROTATE_IMAGES:
         for i in range(train_data.shape[0]):
             angle = numpy.random.rand() * 360
-            train_data[i] = rotate_image(train_data[i], angle)
-            train_labels[i] = rotate_image(train_labels[i], angle)
+            rot_data = rotate_image(train_data[i], angle)
+            rot_label = rotate_image(train_labels[i], angle)
+            train_data = numpy.append(train_data, [rot_data], axis=0)
+            train_labels = numpy.append(train_labels, [rot_label], axis=0)
 
     train_data = extract_data(train_data, border=IMG_BORDER)
     train_labels = extract_labels(train_labels)
@@ -62,7 +64,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     num_epochs = NUM_EPOCHS
 
-    train_data, train_labels = balance_data(train_data, train_labels)
+    #train_data, train_labels = balance_data(train_data, train_labels)
     train_size = train_labels.shape[0]
     validation_data, validation_labels = balance_data(validation_data, validation_labels)
     test_data, test_labels = balance_data(test_data, test_labels)
