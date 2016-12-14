@@ -5,7 +5,7 @@ TRAINING_SIZE = 10
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 64  # 64
 BATCH_SIZE = 64
-NUM_EPOCHS = 20
+NUM_EPOCHS = 20 # Will later be determined by validation.
 ROTATE_IMAGES = True
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
 TRAIN_PREDICTIONS = False  # If True, restore existing model instead of training a new one
@@ -31,3 +31,6 @@ IMG_TOTAL_SIZE = IMG_PATCH_SIZE + 2 * IMG_BORDER
 VALIDATION_TRAIN_PERC = 0.7
 VALIDATION_VAL_PERC = 0.2
 VALIDATION_TEST_PERC = 0.1
+
+# Hyperparameters validation
+COMPUTE_VALIDATION_F1_SCORE_FOR_EACH_EPOCH = True

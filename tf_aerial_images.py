@@ -76,17 +76,6 @@ def main(argv=None):  # pylint: disable=unused-argument
     validation_data, validation_labels = balance_data(validation_data, validation_labels)
     test_data, test_labels = balance_data(test_data, test_labels)
 
-    print("After evening size = {}".format(train_size))
-
-    print("### validation sizes ###")
-    print("train_data = {}".format(train_data.shape))
-    print("train_labels = {}".format(train_labels.shape))
-    print("validation_data = {}".format(validation_data.shape))
-    print("validation_labels = {}".format(validation_labels.shape))
-    print("test_data = {}".format(test_data.shape))
-    print("test_labels = {}".format(test_labels.shape))
-    print("######")
-
     # This is where training samples and labels are fed to the graph.
     # These placeholder nodes will be fed a batch of training data at each
     # training step using the {feed_dict} argument to the Run() call below.
@@ -165,15 +154,6 @@ def main(argv=None):  # pylint: disable=unused-argument
 
         last_layer = prev_layer
 
-        # TODO : Needs to be written differently for new layer system
-        # Uncomment these lines to check the size of each layer
-        # print 'data ' + str(data.get_shape())
-        # print 'conv ' + str(conv.get_shape())
-        # print 'relu ' + str(relu.get_shape())
-        # print 'pool ' + str(pool.get_shape())
-        # print 'pool2 ' + str(pool2.get_shape())
-
-
         # Reshape the feature map cuboid into a 2D matrix to feed it to the
         # fully connected layers.
         last_layer_shape = last_layer.get_shape().as_list()
@@ -181,7 +161,6 @@ def main(argv=None):  # pylint: disable=unused-argument
             last_layer,
             [last_layer_shape[0], last_layer_shape[1] * last_layer_shape[2] * last_layer_shape[3]])
 
-        print(last_layer_shape)
         # Fully connected layer. Note that the '+' operation automatically
         # broadcasts the biases.
         hidden = tf.nn.relu(tf.matmul(reshape, fc1_weights) + fc1_biases)
@@ -190,29 +169,6 @@ def main(argv=None):  # pylint: disable=unused-argument
         if train:
             hidden = tf.nn.dropout(hidden, 0.5, seed=SEED)
         out = tf.matmul(hidden, fc2_weights) + fc2_biases
-
-        # TODO : Needs to be written differently for new layer system
-        # if train == True:
-        #     summary_id = '_0'
-        #     s_data = get_image_summary(data)
-        #     filter_summary0 = tf.image_summary('summary_data' + summary_id, s_data)
-        #     s_conv = get_image_summary(conv)
-        #     filter_summary2 = tf.image_summary('summary_conv' + summary_id, s_conv)
-        #     s_pool = get_image_summary(pool)
-        #     filter_summary3 = tf.image_summary('summary_pool' + summary_id, s_pool)
-        #     s_conv2 = get_image_summary(conv2)
-        #     filter_summary4 = tf.image_summary('summary_conv2' + summary_id, s_conv2)
-        #     s_pool2 = get_image_summary(pool2)
-        #     filter_summary5 = tf.image_summary('summary_pool2' + summary_id, s_pool2)
-
-        return out
-
-    # Training computation: logits + cross-entropy loss.
-
-    logits = model(train_data_node, True)  # BATCH_SIZE*NUM_LABELS
-
-    # print('logits = ' + str(logits.get_shape()))
-    # print('train_labels_node = ' + str(train_labels_node.get_shape()))
 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
         logits, train_labels_node))
@@ -316,7 +272,8 @@ def main(argv=None):  # pylint: disable=unused-argument
                             [optimizer, loss, train_prediction],
                             feed_dict=feed_dict)
                 
-                print('For epoch {} : F1 score on validation set = {}'.format(iepoch, validation(validation_data, validation_labels, s, model)))
+                if COMPUTE_VALIDATION_F1_SCORE_FOR_EACH_EPOCH:
+                    print('For epoch {} : F1 score on validation set = {}'.format(iepoch, validation(validation_data, validation_labels, s, model)))
 
                 # Save the variables to disk.
                 if ENABLE_RECORDING:
