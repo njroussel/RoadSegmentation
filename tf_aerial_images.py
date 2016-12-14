@@ -15,6 +15,11 @@ tf.app.flags.DEFINE_string('train_dir', '/tmp/mnist',
                            """and checkpoint.""")
 FLAGS = tf.app.flags.FLAGS
 
+def validation(data, labels ,s, model):
+    pred = get_prediction_from_patches(data, s, model)
+    f1_score = F1_score(pred, labels)
+    return f1_score
+
 
 def main(argv=None):  # pylint: disable=unused-argument
     numpy.random.seed(0xDEADBEEF)
@@ -303,11 +308,6 @@ def main(argv=None):  # pylint: disable=unused-argument
                         # print_predictions(predictions, batch_labels)
 
                         print('%.2f' % (float(step) * BATCH_SIZE / train_size) + '% of Epoch ' + str(iepoch))
-                        print('Minibatch loss: %.3f' % (l))
-                        print('Minibatch error: %.1f%%' % error_rate(predictions,
-                                                                     batch_labels))
-                        print('Minibatch F1 score: %.3f' % F1_score(predictions,
-                                                                    batch_labels))
 
                         sys.stdout.flush()
                     else:
@@ -315,6 +315,8 @@ def main(argv=None):  # pylint: disable=unused-argument
                         _, l, predictions = s.run(
                             [optimizer, loss, train_prediction],
                             feed_dict=feed_dict)
+                
+                print('For epoch {} : F1 score on validation set = {}'.format(iepoch, validation(validation_data, validation_labels, s, model)))
 
                 # Save the variables to disk.
                 if ENABLE_RECORDING:
@@ -355,14 +357,12 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     print("Begin validation")
     # Run Nico's code.
-    pred = get_prediction_from_patches(validation_data, s, model)
-    validation_f1_score = F1_score(pred, validation_labels)
+    validation_f1_score = validation(validation_data, validation_labels, s, model)
     print("Validation ends : F1 = ", validation_f1_score)
 
     print("Run on test set")
     # Run Nico's code.
-    pred = get_prediction_from_patches(test_data, s, model)
-    test_f1_score = F1_score(pred, test_labels)
+    test_f1_score = validation(test_data, test_labels, s, model)
     print("Run on test ends : F1 = ", test_f1_score)
 
     s.close()
