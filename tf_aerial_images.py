@@ -364,6 +364,8 @@ def main(argv=None):  # pylint: disable=unused-argument
     param_file.write("Validation F1 score     = {}\n".format(validation_f1_score))
     param_file.write("Test F1 score           = {}\n".format(test_f1_score))
     param_file.write("CONV_ARCH               = {}\n".format(CONV_ARCH))
+    param_file.write("IMG_PATCH_SIZE          = {}\n".format(IMG_PATCH_SIZE))
+    param_file.write("IMG_BORDER              = {}\n".format(IMG_BORDER))
     param_file.write("IMG_TOTAL_SIZE          = {}\n".format(IMG_TOTAL_SIZE))
     param_file.write("VALIDATION_TRAIN_PERC   = {}\n".format(VALIDATION_TRAIN_PERC))
     param_file.write("VALIDATION_VAL_PERC     = {}\n".format(VALIDATION_VAL_PERC))
