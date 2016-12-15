@@ -17,7 +17,8 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def validation(data, labels, s, model):
-    pred = get_prediction_from_patches(data, s, model)
+    pred = get_prediction_from_patches(data, s, model, PP_EVAL_BATCH_SIZE, PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS,
+                                       PP_NUM_LABELS)
     f1_score = F1_score(pred, labels)
     return f1_score
 
@@ -67,11 +68,10 @@ def main(argv=None):  # pylint: disable=unused-argument
     train_data = extract_data(train_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
     train_data = train_data.reshape(train_data.shape[0], train_data.shape[1], train_data.shape[2], 1)
     train_labels = extract_labels(train_labels, PP_IMG_PATCH_SIZE)
-    print(train_data.shape)
-    print(train_labels.shape)
 
     validation_data = extract_data(validation_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
-    validation_data = validation_data.reshape(validation_data.shape[0], validation_data.shape[1], validation_data.shape[2], 1)
+    validation_data = validation_data.reshape(validation_data.shape[0], validation_data.shape[1],
+                                              validation_data.shape[2], 1)
     validation_labels = extract_labels(validation_labels, PP_IMG_PATCH_SIZE)
 
     test_data = extract_data(test_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
@@ -308,9 +308,14 @@ def main(argv=None):  # pylint: disable=unused-argument
             for i in range(1, PP_TRAINING_SIZE + 1):
                 print('prediction {}'.format(i))
                 FILE_REGEX = "satImage_%.3d"
-                pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX, 0, 1)
+                pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX, 0, 1,
+                                                       PP_IMG_PATCH_SIZE, PP_IMG_BORDER,
+                                                       PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
+                                                       PP_NUM_LABELS)
                 Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
-                oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX, 0, 1)
+                oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX, 0, 1,
+                                                   PP_IMG_PATCH_SIZE, PP_IMG_BORDER, PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS,
+                                                   PP_EVAL_BATCH_SIZE, PP_NUM_LABELS)
                 oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
 
         if TEST_PREDICTIONS:
@@ -324,9 +329,15 @@ def main(argv=None):  # pylint: disable=unused-argument
                 os.mkdir(test_dir)
             for i in range(1, TEST_SIZE + 1):
                 print('test prediction {}'.format(i))
-                pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX, 0, 1)
+                pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX, 0, 1,
+                                                       PP_IMG_PATCH_SIZE, PP_IMG_BORDER,
+                                                       PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
+                                                       PP_NUM_LABELS)
                 Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
-                oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, 0, 1)
+                oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, 0, 1, PP_IMG_PATCH_SIZE,
+                                                   PP_IMG_BORDER, PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS,
+                                                   PP_EVAL_BATCH_SIZE,
+                                                   PP_NUM_LABELS)
                 oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
     print("Begin validation")
