@@ -33,7 +33,7 @@ def get_prediction_with_groundtruth(filename, image_idx, s, model, file_regex, m
     imageid = file_regex % image_idx
     image_filename = filename + imageid + ".png"
     img = mpimg.imread(image_filename)
-    tmp = numpy.array(img)
+    tmp = np.array(img)
     if len(tmp.shape) == 3:
         img = img[:, :, :3]
 
@@ -48,7 +48,7 @@ def eval_in_batches(data, sess, eval_prediction, data_node):
     if size < EVAL_BATCH_SIZE:
       raise ValueError("batch size for evals larger than dataset: %d" % size)
 
-    predictions = numpy.ndarray(shape=(size, NUM_LABELS), dtype=numpy.float32)
+    predictions = np.ndarray(shape=(size, NUM_LABELS), dtype=np.float32)
 
     for begin in range(0, size, EVAL_BATCH_SIZE):
       end = begin + EVAL_BATCH_SIZE
@@ -65,7 +65,7 @@ def eval_in_batches(data, sess, eval_prediction, data_node):
 
 # Get prediction for given input image
 def get_prediction(img, s, model, means, stds):
-    data = numpy.asarray(img_crop(img, IMG_PATCH_SIZE, IMG_PATCH_SIZE, border=IMG_BORDER))
+    data = np.asarray(img_crop(img, IMG_PATCH_SIZE, IMG_PATCH_SIZE, border=IMG_BORDER))
     data, _, _ = standardize(data, means, stds)
     
     data_node = tf.placeholder(
@@ -80,7 +80,7 @@ def get_prediction(img, s, model, means, stds):
 
 
 def get_prediction_from_patches(patches, s, model):
-    data = numpy.asarray(patches)
+    data = np.asarray(patches)
     
     data_node = tf.placeholder(
         tf.float32, 
@@ -95,7 +95,7 @@ def get_prediction_with_overlay(filename, image_idx, s, model, file_regex, means
     imageid = file_regex % image_idx
     image_filename = filename + imageid + ".png"
     img = mpimg.imread(image_filename)
-    tmp = numpy.array(img)
+    tmp = np.array(img)
     if len(tmp.shape) == 3:
         img = img[:, :, :3]
 

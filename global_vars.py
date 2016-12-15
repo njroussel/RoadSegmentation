@@ -1,14 +1,14 @@
 NUM_CHANNELS = 3  # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2
-TRAINING_SIZE = 100
+TRAINING_SIZE = 20
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 64  # 64
 BATCH_SIZE = 64
 NUM_EPOCHS = 100  # Will later be determined by validation.
 ROTATE_IMAGES = False
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
-TRAIN_PREDICTIONS = False  # If True, restore existing model instead of training a new one
+TRAIN_PREDICTIONS = True  # If True, restore existing model instead of training a new one
 TEST_PREDICTIONS = False
 ENABLE_RECORDING = False
 RECORDING_STEP = 1000
@@ -39,8 +39,7 @@ COMPUTE_VALIDATION_F1_SCORE_FOR_EACH_EPOCH = True
 ################################################################################
 ################################################################################
 
-PP_NUM_CHANNELS = 1  # RGB images
-PP_PIXEL_DEPTH = 255
+PP_NUM_CHANNELS = 1  # Binary images
 PP_NUM_LABELS = 2
 PP_TRAINING_SIZE = 100
 PP_SEED = 43212  # Set to None for random seed.
@@ -61,10 +60,10 @@ PP_CONV_ARCH = [1, 1]
 # Set image patch size in pixels
 # IMG_PATCH_SIZE should be a multiple of 4
 # image size should be an integer multiple of this number!
-PP_IMG_PATCH_SIZE = 1 # LEAVE THIS AT 1
+PP_IMG_PATCH_SIZE = 2 # LEAVE THIS AT 1
 
 # Border for enhanced context.
-PP_IMG_BORDER = 0  # Will be set after archi is found
+PP_IMG_BORDER = 3  # Will be set after archi is found
 
 PP_IMG_TOTAL_SIZE = PP_IMG_PATCH_SIZE + 2 * PP_IMG_BORDER
 

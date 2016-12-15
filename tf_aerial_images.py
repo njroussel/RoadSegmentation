@@ -23,7 +23,7 @@ def validation(data, labels, s, model):
 
 
 def main(argv=None):  # pylint: disable=unused-argument
-    numpy.random.seed(0xDEADBEEF)
+    np.random.seed(0xDEADBEEF)
 
     params_file_name = 'runs.txt'
     data_dir = 'training/'
@@ -35,13 +35,13 @@ def main(argv=None):  # pylint: disable=unused-argument
     f1_training_per_epoch = []
     loss_per_recording_step = []
 
-    # Extract it into numpy arrays.
+    # Extract it into np arrays.
     FILE_REGEX = "satImage_%.3d"
 
     sat_images, label_images = read_images(train_data_filename, train_labels_filename, TRAINING_SIZE,
                                            FILE_REGEX)
 
-    perm_indices = numpy.random.permutation(range(sat_images.shape[0]))
+    perm_indices = np.random.permutation(range(sat_images.shape[0]))
     train_limit = int(VALIDATION_TRAIN_PERC * len(perm_indices))
     val_limit = int(VALIDATION_VAL_PERC * len(perm_indices))
 
@@ -59,20 +59,20 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     if ROTATE_IMAGES:
         for i in range(train_data.shape[0]):
-            angle = numpy.random.rand() * 360
+            angle = np.random.rand() * 360
             rot_data = rotate_image(train_data[i], angle)
             rot_label = rotate_image(train_labels[i], angle)
-            train_data = numpy.append(train_data, [rot_data], axis=0)
-            train_labels = numpy.append(train_labels, [rot_label], axis=0)
+            train_data = np.append(train_data, [rot_data], axis=0)
+            train_labels = np.append(train_labels, [rot_label], axis=0)
 
     train_data = extract_data(train_data, IMG_PATCH_SIZE, IMG_BORDER)
-    train_labels = extract_labels(train_labels)
+    train_labels = extract_labels(train_labels, IMG_PATCH_SIZE)
 
     validation_data = extract_data(validation_data, IMG_PATCH_SIZE, IMG_BORDER)
-    validation_labels = extract_labels(validation_labels)
+    validation_labels = extract_labels(validation_labels, IMG_PATCH_SIZE)
 
     test_data = extract_data(test_data, IMG_PATCH_SIZE, IMG_BORDER)
-    test_labels = extract_labels(test_labels)
+    test_labels = extract_labels(test_labels, IMG_PATCH_SIZE)
 
     num_epochs = NUM_EPOCHS
 
@@ -242,7 +242,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             for iepoch in range(num_epochs):
 
                 # Permute training indices
-                perm_indices = numpy.random.permutation(training_indices)
+                perm_indices = np.random.permutation(training_indices)
 
                 for step in range(int(train_size / BATCH_SIZE)):
 
@@ -253,7 +253,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                     # Note that we could use better randomization across epochs.
                     batch_data = train_data[batch_indices, :, :, :]
                     batch_labels = train_labels[batch_indices]
-                    # This dictionary maps the batch data (as a numpy array) to the
+                    # This dictionary maps the batch data (as a np array) to the
                     # node in the graph is should be fed to.
                     feed_dict = {train_data_node: batch_data,
                                  train_labels_node: batch_labels}

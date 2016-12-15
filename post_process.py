@@ -23,7 +23,7 @@ def validation(data, labels, s, model):
 
 
 def main(argv=None):  # pylint: disable=unused-argument
-    numpy.random.seed(0xDEADBEEF)
+    np.random.seed(0xDEADBEEF)
 
     params_file_name = 'runs.txt'
     train_data_filename = './predictions_training/'
@@ -34,41 +34,44 @@ def main(argv=None):  # pylint: disable=unused-argument
     f1_training_per_epoch = []
     loss_per_recording_step = []
 
-    # Extract it into numpy arrays.
+    # Extract it into np arrays.
     FILE_REGEX = "prediction_%d"
     prediction_images = read_binary_images(train_data_filename, TRAINING_SIZE, FILE_REGEX)
+    FILE_REGEX = "satImage_%.3d"
     label_images = read_binary_images(train_labels_filename, TRAINING_SIZE, FILE_REGEX)
 
-    prediction_images = quantize_binary_images(prediction_images, IMG_PATCH_SIZE)
-    label_images = quantize_binary_images(label_images, IMG_PATCH_SIZE)
+    prediction_images = quantize_binary_images(prediction_images, IMG_PATCH_SIZE, PP_IMG_PATCH_SIZE)
+    label_images = quantize_binary_images(label_images, IMG_PATCH_SIZE, PP_IMG_PATCH_SIZE)
 
-    perm_indices = numpy.random.permutation(range(prediction_images.shape[0]))
+    perm_indices = np.random.permutation(range(prediction_images.shape[0]))
     train_limit = int(VALIDATION_TRAIN_PERC * len(perm_indices))
     val_limit = int(VALIDATION_VAL_PERC * len(perm_indices))
 
     train_data = prediction_images[perm_indices[0:train_limit]]
-    train_data, means, stds = standardize(train_data)
     train_labels = label_images[perm_indices[0:train_limit]]
 
     validation_data = prediction_images[perm_indices[train_limit:train_limit + val_limit]]
-    validation_data, _, _ = standardize(validation_data, means=means, stds=stds)
     validation_labels = label_images[perm_indices[train_limit:train_limit + val_limit]]
 
     test_data = prediction_images[perm_indices[train_limit + val_limit:]]
-    test_data, _, _ = standardize(test_data, means=means, stds=stds)
     test_labels = label_images[perm_indices[train_limit + val_limit:]]
 
     if ROTATE_IMAGES:
         for i in range(train_data.shape[0]):
-            angle = numpy.random.rand() * 360
+            angle = np.random.rand() * 360
             rot_data = rotate_image(train_data[i], angle)
             rot_label = rotate_image(train_labels[i], angle)
-            train_data = numpy.append(train_data, [rot_data], axis=0)
-            train_labels = numpy.append(train_labels, [rot_label], axis=0)
+            train_data = np.append(train_data, [rot_data], axis=0)
+            train_labels = np.append(train_labels, [rot_label], axis=0)
 
     train_data = extract_data(train_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
+    train_labels = extract_labels(train_labels, PP_IMG_PATCH_SIZE)
+
     validation_data = extract_data(validation_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
+    validation_labels = extract_labels(validation_labels, PP_IMG_PATCH_SIZE)
+
     test_data = extract_data(test_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
+    test_labels = extract_labels(test_labels, PP_IMG_PATCH_SIZE)
 
     num_epochs = PP_NUM_EPOCHS
 
@@ -238,7 +241,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             for iepoch in range(num_epochs):
 
                 # Permute training indices
-                perm_indices = numpy.random.permutation(training_indices)
+                perm_indices = np.random.permutation(training_indices)
 
                 for step in range(int(train_size / PP_BATCH_SIZE)):
 
@@ -249,7 +252,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                     # Note that we could use better randomization across epochs.
                     batch_data = train_data[batch_indices, :, :, :]
                     batch_labels = train_labels[batch_indices]
-                    # This dictionary maps the batch data (as a numpy array) to the
+                    # This dictionary maps the batch data (as a np array) to the
                     # node in the graph is should be fed to.
                     feed_dict = {train_data_node: batch_data,
                                  train_labels_node: batch_labels}
@@ -296,14 +299,15 @@ def main(argv=None):  # pylint: disable=unused-argument
 
         if PP_TRAIN_PREDICTIONS:
             print("Running prediction on training set")
-            prediction_training_dir = "predictions_training/"
+            prediction_training_dir = "predictions_training_post/"
             if not os.path.isdir(prediction_training_dir):
                 os.mkdir(prediction_training_dir)
             for i in range(1, PP_TRAINING_SIZE + 1):
                 print('prediction {}'.format(i))
-                pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX, means, stds)
+                FILE_REGEX = "satImage_%.3d"
+                pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX, 0, 1)
                 Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
-                oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX, means, stds)
+                oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX, 0, 1)
                 oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
 
         if TEST_PREDICTIONS:
@@ -312,14 +316,14 @@ def main(argv=None):  # pylint: disable=unused-argument
             FILE_REGEX = 'test_%d'
             TEST_SIZE = 50
             test_data_filename = './test_set_images/'
-            test_dir = 'test_predictions/'
+            test_dir = 'test_predictions_post/'
             if not os.path.isdir(test_dir):
                 os.mkdir(test_dir)
             for i in range(1, TEST_SIZE + 1):
                 print('test prediction {}'.format(i))
-                pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX, means, stds)
+                pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX, 0, 1)
                 Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
-                oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds)
+                oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, 0, 1)
                 oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
     print("Begin validation")
@@ -339,7 +343,6 @@ def main(argv=None):  # pylint: disable=unused-argument
     param_file = open(params_file_name, 'a')
     param_file.write("On {}:\n".format(time.strftime("%c")))
     param_file.write("PP_NUM_CHANNELS            = {}\n".format(PP_NUM_CHANNELS))
-    param_file.write("PP_PIXEL_DEPTH             = {}\n".format(PP_PIXEL_DEPTH))
     param_file.write("PP_NUM_LABELS              = {}\n".format(PP_NUM_LABELS))
     param_file.write("PP_TRAINING_SIZE           = {}\n".format(PP_TRAINING_SIZE))
     param_file.write("PP_SEED                    = {}\n".format(PP_SEED))
