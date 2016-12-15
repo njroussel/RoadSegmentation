@@ -76,7 +76,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     num_epochs = NUM_EPOCHS
 
-    #train_data, train_labels = balance_data(train_data, train_labels)
+    train_data, train_labels = balance_data(train_data, train_labels)
     train_size = train_labels.shape[0]
     validation_data, validation_labels = balance_data(validation_data, validation_labels)
     test_data, test_labels = balance_data(test_data, test_labels)
