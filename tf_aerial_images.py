@@ -24,6 +24,7 @@ def validation(data, labels, s, model):
 
 def main(argv=None):  # pylint: disable=unused-argument
     np.random.seed(0xDEADBEEF)
+    tf.set_random_seed(0xDEADBEEF)
 
     params_file_name = 'runs.txt'
     data_dir = 'training/'
@@ -78,8 +79,6 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     train_data, train_labels = balance_data(train_data, train_labels)
     train_size = train_labels.shape[0]
-    validation_data, validation_labels = balance_data(validation_data, validation_labels)
-    test_data, test_labels = balance_data(test_data, test_labels)
 
     # This is where training samples and labels are fed to the graph.
     # These placeholder nodes will be fed a batch of training data at each
