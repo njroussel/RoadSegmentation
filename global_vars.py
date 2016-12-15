@@ -60,7 +60,7 @@ PP_CONV_ARCH = [1, 1]
 # Set image patch size in pixels
 # IMG_PATCH_SIZE should be a multiple of 4
 # image size should be an integer multiple of this number!
-PP_IMG_PATCH_SIZE = 2 # LEAVE THIS AT 1
+PP_IMG_PATCH_SIZE = 2 #
 
 # Border for enhanced context.
 PP_IMG_BORDER = 3  # Will be set after archi is found

@@ -140,7 +140,6 @@ def img_crop(im, w, h, border=0):
     if (border != 0):
         if is_2d:
             im = np.array(np.pad(im, ((border, border), (border, border)), 'symmetric').T).T
-            im = im.reshape(im.shape[0], im.shape[0], 1)
         else:
             im = np.array([np.pad(im[:, :, i], ((border, border), (border, border)), 'symmetric').T
                            for i in range(3)

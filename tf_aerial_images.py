@@ -17,7 +17,7 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def validation(data, labels, s, model):
-    pred = get_prediction_from_patches(data, s, model)
+    pred = get_prediction_from_patches(data, s, model, EVAL_BATCH_SIZE, IMG_TOTAL_SIZE, NUM_CHANNELS, NUM_LABELS)
     f1_score = F1_score(pred, labels)
     return f1_score
 
@@ -305,9 +305,13 @@ def main(argv=None):  # pylint: disable=unused-argument
                 os.mkdir(prediction_training_dir)
             for i in range(1, TRAINING_SIZE + 1):
                 print('prediction {}'.format(i))
-                pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX, means, stds)
+                pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                                       IMG_PATCH_SIZE, IMG_BORDER, IMG_TOTAL_SIZE, NUM_CHANNELS,
+                                                       EVAL_BATCH_SIZE, NUM_LABELS)
                 Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
-                oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX, means, stds)
+                oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                                   IMG_PATCH_SIZE, IMG_BORDER, IMG_TOTAL_SIZE, NUM_CHANNELS,
+                                                   EVAL_BATCH_SIZE, NUM_LABELS)
                 oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
 
         if TEST_PREDICTIONS:
@@ -321,9 +325,13 @@ def main(argv=None):  # pylint: disable=unused-argument
                 os.mkdir(test_dir)
             for i in range(1, TEST_SIZE + 1):
                 print('test prediction {}'.format(i))
-                pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX, means, stds)
+                pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                                       IMG_PATCH_SIZE, IMG_BORDER, IMG_TOTAL_SIZE, NUM_CHANNELS,
+                                                       EVAL_BATCH_SIZE, NUM_LABELS)
                 Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
-                oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds)
+                oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                                   IMG_PATCH_SIZE, IMG_BORDER, IMG_TOTAL_SIZE, NUM_CHANNELS,
+                                                   EVAL_BATCH_SIZE, NUM_LABELS)
                 oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
     print("Begin validation")

@@ -65,20 +65,23 @@ def main(argv=None):  # pylint: disable=unused-argument
             train_labels = np.append(train_labels, [rot_label], axis=0)
 
     train_data = extract_data(train_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
+    train_data = train_data.reshape(train_data.shape[0], train_data.shape[1], train_data.shape[2], 1)
     train_labels = extract_labels(train_labels, PP_IMG_PATCH_SIZE)
+    print(train_data.shape)
+    print(train_labels.shape)
 
     validation_data = extract_data(validation_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
+    validation_data = validation_data.reshape(validation_data.shape[0], validation_data.shape[1], validation_data.shape[2], 1)
     validation_labels = extract_labels(validation_labels, PP_IMG_PATCH_SIZE)
 
     test_data = extract_data(test_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
+    test_data = test_data.reshape(test_data.shape[0], test_data.shape[1], test_data.shape[2], 1)
     test_labels = extract_labels(test_labels, PP_IMG_PATCH_SIZE)
 
     num_epochs = PP_NUM_EPOCHS
 
     train_data, train_labels = balance_data(train_data, train_labels)
     train_size = train_labels.shape[0]
-    validation_data, validation_labels = balance_data(validation_data, validation_labels)
-    test_data, test_labels = balance_data(test_data, test_labels)
 
     # This is where training samples and labels are fed to the graph.
     # These placeholder nodes will be fed a batch of training data at each
