@@ -76,8 +76,7 @@ def read_images(train_filename, label_filename, num_images, file_regex):
 def quantize_binary_images(images, quantization_patch_size, output_patch_size):
     quantized_images = []
     for image in images:
-        single_pixel_image = extract_labels([image], quantization_patch_size).reshape(
-            (-1, int(image.shape[0] / quantization_patch_size), 2))[:, :, 0].T
+        single_pixel_image = extract_labels([image], quantization_patch_size).reshape((-1, int(image.shape[0] / quantization_patch_size), 2))[:, :, 0].T
         output_patch_image = ndimage.zoom(single_pixel_image, output_patch_size, order=0)
         quantized_images.append(output_patch_image)
 

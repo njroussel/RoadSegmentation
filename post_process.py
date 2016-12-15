@@ -321,7 +321,7 @@ def main(argv=None):  # pylint: disable=unused-argument
         if PP_TEST_PREDICTIONS:
             ## Run on test set.
             print('Running on test set.')
-            FILE_REGEX = 'test_%d'
+            FILE_REGEX = 'prediction_%d'
             TEST_SIZE = 50
             test_data_filename = './test_predictions/'
             test_dir = 'test_predictions_post/'
