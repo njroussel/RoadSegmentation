@@ -318,12 +318,12 @@ def main(argv=None):  # pylint: disable=unused-argument
                                                    PP_EVAL_BATCH_SIZE, PP_NUM_LABELS)
                 oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
 
-        if TEST_PREDICTIONS:
+        if PP_TEST_PREDICTIONS:
             ## Run on test set.
             print('Running on test set.')
             FILE_REGEX = 'test_%d'
             TEST_SIZE = 50
-            test_data_filename = './test_set_images/'
+            test_data_filename = './test_predictions/'
             test_dir = 'test_predictions_post/'
             if not os.path.isdir(test_dir):
                 os.mkdir(test_dir)
