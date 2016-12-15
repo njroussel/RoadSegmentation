@@ -32,32 +32,53 @@ def rotate_image(image, angle):
     return rotated_image
 
 
-def read_images(train_filename, label_filename, num_images, file_regex):
-    train_images = []
-    label_images = []
+def read_binary_images(image_filename, num_images, file_regex):
+    images = []
+    for i in range(1, num_images + 1):
+        imageid = file_regex % i
+        filename = image_filename + imageid + ".png"
+        if os.path.isfile(filename):
+            print('Loading ' + filename)
+            img = mpimg.imread(filename)
+            images.append(img)
+        else:
+            print('File ' + filename + ' does not exist')
+
+    return numpy.array(images)
+
+
+def read_3channel_images(image_filename, num_images, file_regex):
+    images = []
 
     for i in range(1, num_images + 1):
         imageid = file_regex % i
-        train_image_filename = train_filename + imageid + ".png"
-        label_image_filename = label_filename + imageid + ".png"
+        filename = image_filename + imageid + ".png"
 
-        if os.path.isfile(train_image_filename) and os.path.isfile(label_image_filename):
-            print('Loading ' + train_image_filename)
-            img = mpimg.imread(train_image_filename)
+        if os.path.isfile(filename):
+            print('Loading ' + filename)
+            img = mpimg.imread(filename)
             tmp = numpy.array(img)
             if len(tmp.shape) == 3:
                 img = img[:, :, :3]
-            train_images.append(img)
 
-            print('Loading ' + label_image_filename)
-            img = mpimg.imread(label_image_filename)
-            label_images.append(img)
+            images.append(img)
         else:
-            print('File ' + train_image_filename + ' does not exist')
-            print('OR')
-            print('File ' + label_image_filename + ' does not exist')
+            print('File ' + filename + ' does not exist')
 
-    return numpy.array(train_images), numpy.array(label_images)
+    return numpy.array(images)
+
+
+def read_images(train_filename, label_filename, num_images, file_regex):
+    return read_3channel_images(train_filename, num_images, file_regex), read_binary_images(label_filename, num_images,
+                                                                                            file_regex)
+
+
+def quantize_binary_images(images, patch_size):
+    quantized_images = []
+    for image in images:
+        quantized_images.append(extract_labels([image[0]]).reshape((-1, image.shape[0] / patch_size, 2))[:, :, 0].T)
+
+    return quantized_images
 
 
 def standardize(images, means=None, stds=None):
@@ -125,14 +146,14 @@ def img_crop(im, w, h, border=0):
     return list_patches
 
 
-def extract_data(images, border=0):
+def extract_data(images, patch_size, border):
     """Extract the images into a 4D tensor [image index, y, x, channels].
     Values are rescaled from [0, 255] down to [-0.5, 0.5].
         @param images : the images.
         @param border : the border.
     """
     num_images = len(images)
-    img_patches = [img_crop(images[i], IMG_PATCH_SIZE, IMG_PATCH_SIZE, border) for i in range(num_images)]
+    img_patches = [img_crop(images[i], patch_size, patch_size, border) for i in range(num_images)]
     data = [img_patches[i][j] for i in range(len(img_patches)) for j in range(len(img_patches[i]))]
     return numpy.asarray(data)
 

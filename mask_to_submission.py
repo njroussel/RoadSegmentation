@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import os
-import numpy as np
-import matplotlib.image as mpimg
 import re
+
+import matplotlib.image as mpimg
+import numpy as np
 
 foreground_threshold = 0.25 # percentage of pixels > 1 required to assign a foreground label to a patch
 

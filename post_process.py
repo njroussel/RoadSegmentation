@@ -26,9 +26,8 @@ def main(argv=None):  # pylint: disable=unused-argument
     numpy.random.seed(0xDEADBEEF)
 
     params_file_name = 'runs.txt'
-    data_dir = 'training/'
-    train_data_filename = data_dir + 'images/'
-    train_labels_filename = data_dir + 'groundtruth/'
+    train_data_filename = './predictions_training/'
+    train_labels_filename = './training/groundtruth/'
 
     # Array containing all f1 score for validation ar each epoch (if enabled)
     f1_validation_per_epoch = []
@@ -36,24 +35,26 @@ def main(argv=None):  # pylint: disable=unused-argument
     loss_per_recording_step = []
 
     # Extract it into numpy arrays.
-    FILE_REGEX = "satImage_%.3d"
+    FILE_REGEX = "prediction_%d"
+    prediction_images = read_binary_images(train_data_filename, TRAINING_SIZE, FILE_REGEX)
+    label_images = read_binary_images(train_labels_filename, TRAINING_SIZE, FILE_REGEX)
 
-    sat_images, label_images = read_images(train_data_filename, train_labels_filename, TRAINING_SIZE,
-                                           FILE_REGEX)
+    prediction_images = quantize_binary_images(prediction_images, IMG_PATCH_SIZE)
+    label_images = quantize_binary_images(label_images, IMG_PATCH_SIZE)
 
-    perm_indices = numpy.random.permutation(range(sat_images.shape[0]))
+    perm_indices = numpy.random.permutation(range(prediction_images.shape[0]))
     train_limit = int(VALIDATION_TRAIN_PERC * len(perm_indices))
     val_limit = int(VALIDATION_VAL_PERC * len(perm_indices))
 
-    train_data = sat_images[perm_indices[0:train_limit]]
+    train_data = prediction_images[perm_indices[0:train_limit]]
     train_data, means, stds = standardize(train_data)
     train_labels = label_images[perm_indices[0:train_limit]]
 
-    validation_data = sat_images[perm_indices[train_limit:train_limit + val_limit]]
+    validation_data = prediction_images[perm_indices[train_limit:train_limit + val_limit]]
     validation_data, _, _ = standardize(validation_data, means=means, stds=stds)
     validation_labels = label_images[perm_indices[train_limit:train_limit + val_limit]]
 
-    test_data = sat_images[perm_indices[train_limit + val_limit:]]
+    test_data = prediction_images[perm_indices[train_limit + val_limit:]]
     test_data, _, _ = standardize(test_data, means=means, stds=stds)
     test_labels = label_images[perm_indices[train_limit + val_limit:]]
 
@@ -65,16 +66,11 @@ def main(argv=None):  # pylint: disable=unused-argument
             train_data = numpy.append(train_data, [rot_data], axis=0)
             train_labels = numpy.append(train_labels, [rot_label], axis=0)
 
-    train_data = extract_data(train_data, IMG_PATCH_SIZE, IMG_BORDER)
-    train_labels = extract_labels(train_labels)
+    train_data = extract_data(train_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
+    validation_data = extract_data(validation_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
+    test_data = extract_data(test_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
 
-    validation_data = extract_data(validation_data, IMG_PATCH_SIZE, IMG_BORDER)
-    validation_labels = extract_labels(validation_labels)
-
-    test_data = extract_data(test_data, IMG_PATCH_SIZE, IMG_BORDER)
-    test_labels = extract_labels(test_labels)
-
-    num_epochs = NUM_EPOCHS
+    num_epochs = PP_NUM_EPOCHS
 
     train_data, train_labels = balance_data(train_data, train_labels)
     train_size = train_labels.shape[0]
@@ -86,18 +82,18 @@ def main(argv=None):  # pylint: disable=unused-argument
     # training step using the {feed_dict} argument to the Run() call below.
     train_data_node = tf.placeholder(
         tf.float32,
-        shape=(BATCH_SIZE, IMG_TOTAL_SIZE, IMG_TOTAL_SIZE, NUM_CHANNELS))
+        shape=(PP_BATCH_SIZE, PP_IMG_TOTAL_SIZE, PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS))
 
     train_labels_node = tf.placeholder(tf.float32,
-                                       shape=(BATCH_SIZE, NUM_LABELS))
+                                       shape=(PP_BATCH_SIZE, PP_NUM_LABELS))
 
     train_all_data_node = tf.constant(train_data)
 
     # init weights
-    conv_params = [None] * len(CONV_ARCH)
+    conv_params = [None] * len(PP_CONV_ARCH)
 
-    prev_depth = NUM_CHANNELS
-    for i, n_conv in enumerate(CONV_ARCH):
+    prev_depth = PP_NUM_CHANNELS
+    for i, n_conv in enumerate(PP_CONV_ARCH):
         conv_params[i] = [None] * n_conv
         new_depth = 32 * 2 ** i
         for layer in range(n_conv):
@@ -110,12 +106,12 @@ def main(argv=None):  # pylint: disable=unused-argument
             conv_params[i][layer] = (conv_weights, conv_biases)
             prev_depth = new_depth
 
-    pool_fact = 2 ** len(CONV_ARCH)
+    pool_fact = 2 ** len(PP_CONV_ARCH)
 
-    if IMG_TOTAL_SIZE % pool_fact != 0:
-        raise "not dividable by pool fact " + str(IMG_TOTAL_SIZE) + " / " + str(pool_fact)
+    if PP_IMG_TOTAL_SIZE % pool_fact != 0:
+        raise "not dividable by pool fact " + str(PP_IMG_TOTAL_SIZE) + " / " + str(pool_fact)
 
-    size = int(IMG_TOTAL_SIZE / pool_fact * IMG_TOTAL_SIZE / pool_fact * new_depth)
+    size = int(PP_IMG_TOTAL_SIZE / pool_fact * PP_IMG_TOTAL_SIZE / pool_fact * new_depth)
 
     fc1_weights = tf.Variable(  # fully connected, depth 512.
         tf.truncated_normal(
@@ -126,10 +122,10 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     fc2_weights = tf.Variable(
         tf.truncated_normal(
-            [512, NUM_LABELS],
+            [512, PP_NUM_LABELS],
             stddev=0.1,
             seed=SEED))
-    fc2_biases = tf.Variable(tf.constant(0.1, shape=[NUM_LABELS]))
+    fc2_biases = tf.Variable(tf.constant(0.1, shape=[PP_NUM_LABELS]))
 
     # We will replicate the model structure for the training subgraph, as well
     # as the evaluation subgraphs, while sharing the trainable parameters.
@@ -137,7 +133,7 @@ def main(argv=None):  # pylint: disable=unused-argument
         """The Model definition."""
 
         prev_layer = data
-        for i, n_conv in enumerate(CONV_ARCH):
+        for i, n_conv in enumerate(PP_CONV_ARCH):
 
             for layer in range(n_conv):
                 # 2D convolution
@@ -204,7 +200,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     batch = tf.Variable(0)
 
     # Use adam optimizer as it optimises automatically the learning rate.
-    adam_opt = tf.train.AdamOptimizer(LEARNING_RATE)
+    adam_opt = tf.train.AdamOptimizer(PP_LEARNING_RATE)
     optimizer = adam_opt.minimize(loss, global_step=batch)
 
     # Predictions for the minibatch, validation set and test set.
@@ -218,7 +214,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     init = tf.global_variables_initializer()
 
     s = tf.Session()
-    if RESTORE_MODEL:
+    if PP_RESTORE_MODEL:
         # Restore variables from disk.
         saver.restore(s, FLAGS.train_dir + "/model.ckpt")
         print("Model restored.")
@@ -234,7 +230,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                                                 graph=s.graph)
         print('Initialized!')
         # Loop through training steps.
-        print('Total number of iterations = ' + str(int(num_epochs * train_size / BATCH_SIZE)))
+        print('Total number of iterations = ' + str(int(num_epochs * train_size / PP_BATCH_SIZE)))
 
         training_indices = range(train_size)
 
@@ -244,10 +240,10 @@ def main(argv=None):  # pylint: disable=unused-argument
                 # Permute training indices
                 perm_indices = numpy.random.permutation(training_indices)
 
-                for step in range(int(train_size / BATCH_SIZE)):
+                for step in range(int(train_size / PP_BATCH_SIZE)):
 
-                    offset = (step * BATCH_SIZE) % (train_size - BATCH_SIZE)
-                    batch_indices = perm_indices[offset:(offset + BATCH_SIZE)]
+                    offset = (step * PP_BATCH_SIZE) % (train_size - PP_BATCH_SIZE)
+                    batch_indices = perm_indices[offset:(offset + PP_BATCH_SIZE)]
 
                     # Compute the offset of the current minibatch in the data.
                     # Note that we could use better randomization across epochs.
@@ -258,13 +254,13 @@ def main(argv=None):  # pylint: disable=unused-argument
                     feed_dict = {train_data_node: batch_data,
                                  train_labels_node: batch_labels}
 
-                    if step % RECORDING_STEP == 0:
+                    if step % PP_RECORDING_STEP == 0:
 
                         summary_str, _, l, predictions = s.run(
                             [summary_op, optimizer, loss, train_prediction],
                             feed_dict=feed_dict)
                         # summary_str = s.run(summary_op, feed_dict=feed_dict)
-                        if ENABLE_RECORDING:
+                        if PP_ENABLE_RECORDING:
                             summary_writer.add_summary(summary_str, step)
                             summary_writer.flush()
 
@@ -272,7 +268,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
                         loss_per_recording_step.append(l)
                         print('loss = ', l)
-                        print('%.2f' % (float(step) * BATCH_SIZE / train_size) + '% of Epoch ' + str(iepoch))
+                        print('%.2f' % (float(step) * PP_BATCH_SIZE / train_size) + '% of Epoch ' + str(iepoch))
 
                         sys.stdout.flush()
                     else:
@@ -281,7 +277,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                             [optimizer, loss, train_prediction],
                             feed_dict=feed_dict)
 
-                if COMPUTE_VALIDATION_F1_SCORE_FOR_EACH_EPOCH:
+                if PP_COMPUTE_VALIDATION_F1_SCORE_FOR_EACH_EPOCH:
                     f1_score_validation = validation(validation_data, validation_labels, s, model)
                     f1_validation_per_epoch.append(f1_score_validation)
                     f1_score_training = validation(train_data, train_labels, s, model)
@@ -290,7 +286,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                     print('For epoch {} : F1 score on training set = {}'.format(iepoch, f1_score_training))
 
                 # Save the variables to disk.
-                if ENABLE_RECORDING:
+                if PP_ENABLE_RECORDING:
                     save_path = saver.save(s, FLAGS.train_dir + "/model.ckpt")
                     print("Model saved in file: %s" % save_path)
 
@@ -298,12 +294,12 @@ def main(argv=None):  # pylint: disable=unused-argument
             print("Interrupted at epoch ", iepoch + 1)
             pass
 
-        if TRAIN_PREDICTIONS:
+        if PP_TRAIN_PREDICTIONS:
             print("Running prediction on training set")
             prediction_training_dir = "predictions_training/"
             if not os.path.isdir(prediction_training_dir):
                 os.mkdir(prediction_training_dir)
-            for i in range(1, TRAINING_SIZE + 1):
+            for i in range(1, PP_TRAINING_SIZE + 1):
                 print('prediction {}'.format(i))
                 pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX, means, stds)
                 Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
@@ -342,32 +338,32 @@ def main(argv=None):  # pylint: disable=unused-argument
     print("Write run informations to {} file".format(params_file_name))
     param_file = open(params_file_name, 'a')
     param_file.write("On {}:\n".format(time.strftime("%c")))
-    param_file.write("NUM_CHANNELS            = {}\n".format(NUM_CHANNELS))
-    param_file.write("PIXEL_DEPTH             = {}\n".format(PIXEL_DEPTH))
-    param_file.write("NUM_LABELS              = {}\n".format(NUM_LABELS))
-    param_file.write("TRAINING_SIZE           = {}\n".format(TRAINING_SIZE))
-    param_file.write("SEED                    = {}\n".format(SEED))
-    param_file.write("EVAL_BATCH_SIZE         = {}\n".format(EVAL_BATCH_SIZE))
-    param_file.write("BATCH_SIZE              = {}\n".format(BATCH_SIZE))
-    param_file.write("NUM_EPOCHS              = {}\n".format(NUM_EPOCHS))
-    param_file.write("ROTATE_IMAGES           = {}\n".format(ROTATE_IMAGES))
-    param_file.write("RESTORE_MODEL           = {}\n".format(RESTORE_MODEL))
-    param_file.write("TRAIN_PREDICTIONS       = {}\n".format(TRAIN_PREDICTIONS))
-    param_file.write("TEST_PREDICTIONS        = {}\n".format(TEST_PREDICTIONS))
-    param_file.write("ENABLE_RECORDING        = {}\n".format(ENABLE_RECORDING))
-    param_file.write("RECORDING_STEP          = {}\n".format(RECORDING_STEP))
-    param_file.write("LEARNING_RATE           = {}\n".format(LEARNING_RATE))
-    param_file.write("Last epoch              = {}\n".format(iepoch + 1))
-    param_file.write("Validation F1 per epoch = {}\n".format(f1_validation_per_epoch))
-    param_file.write("Training F1 per epoch   = {}\n".format(f1_training_per_epoch))
-    param_file.write("Loss per recording step = {}\n".format(loss_per_recording_step))
-    param_file.write("Validation F1 score     = {}\n".format(validation_f1_score))
-    param_file.write("Test F1 score           = {}\n".format(test_f1_score))
-    param_file.write("CONV_ARCH               = {}\n".format(CONV_ARCH))
-    param_file.write("IMG_TOTAL_SIZE          = {}\n".format(IMG_TOTAL_SIZE))
-    param_file.write("VALIDATION_TRAIN_PERC   = {}\n".format(VALIDATION_TRAIN_PERC))
-    param_file.write("VALIDATION_VAL_PERC     = {}\n".format(VALIDATION_VAL_PERC))
-    param_file.write("VALIDATION_TEST_PERC    = {}\n".format(VALIDATION_TEST_PERC))
+    param_file.write("PP_NUM_CHANNELS            = {}\n".format(PP_NUM_CHANNELS))
+    param_file.write("PP_PIXEL_DEPTH             = {}\n".format(PP_PIXEL_DEPTH))
+    param_file.write("PP_NUM_LABELS              = {}\n".format(PP_NUM_LABELS))
+    param_file.write("PP_TRAINING_SIZE           = {}\n".format(PP_TRAINING_SIZE))
+    param_file.write("PP_SEED                    = {}\n".format(PP_SEED))
+    param_file.write("PP_EVAL_BATCH_SIZE         = {}\n".format(PP_EVAL_BATCH_SIZE))
+    param_file.write("PP_BATCH_SIZE              = {}\n".format(PP_BATCH_SIZE))
+    param_file.write("PP_NUM_EPOCHS              = {}\n".format(PP_NUM_EPOCHS))
+    param_file.write("PP_ROTATE_IMAGES           = {}\n".format(PP_ROTATE_IMAGES))
+    param_file.write("PP_RESTORE_MODEL           = {}\n".format(PP_RESTORE_MODEL))
+    param_file.write("PP_TRAIN_PREDICTIONS       = {}\n".format(PP_TRAIN_PREDICTIONS))
+    param_file.write("PP_TEST_PREDICTIONS        = {}\n".format(PP_TEST_PREDICTIONS))
+    param_file.write("PP_ENABLE_RECORDING        = {}\n".format(PP_ENABLE_RECORDING))
+    param_file.write("PP_RECORDING_STEP          = {}\n".format(PP_RECORDING_STEP))
+    param_file.write("PP_LEARNING_RATE           = {}\n".format(PP_LEARNING_RATE))
+    param_file.write("PP_Last epoch              = {}\n".format(iepoch + 1))
+    param_file.write("PP_Validation F1 per epoch = {}\n".format(f1_validation_per_epoch))
+    param_file.write("PP_Training F1 per epoch   = {}\n".format(f1_training_per_epoch))
+    param_file.write("PP_Loss per recording step = {}\n".format(loss_per_recording_step))
+    param_file.write("PP_Validation F1 score     = {}\n".format(validation_f1_score))
+    param_file.write("PP_Test F1 score           = {}\n".format(test_f1_score))
+    param_file.write("PP_CONV_ARCH               = {}\n".format(PP_CONV_ARCH))
+    param_file.write("PP_IMG_TOTAL_SIZE          = {}\n".format(PP_IMG_TOTAL_SIZE))
+    param_file.write("PP_VALIDATION_TRAIN_PERC   = {}\n".format(PP_VALIDATION_TRAIN_PERC))
+    param_file.write("PP_VALIDATION_VAL_PERC     = {}\n".format(PP_VALIDATION_VAL_PERC))
+    param_file.write("PP_VALIDATION_TEST_PERC    = {}\n".format(PP_VALIDATION_TEST_PERC))
     param_file.write("################################################################################\n")
     param_file.write("################################################################################\n\n")
     param_file.close()
