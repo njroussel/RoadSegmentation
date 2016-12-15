@@ -71,9 +71,10 @@ def eval_in_batches(data, sess, eval_prediction, data_node, eval_batch_size, num
 def get_prediction(img, s, model, means, stds, img_patch_size, img_border, img_total_size, num_channels,
                    eval_batch_size, num_labels):
     data = np.asarray(img_crop(img, img_patch_size, img_patch_size, border=img_border))
-    # TODO : This is nasty, we shouldn't be doing it
-    if data.shape[3] == 3:
-        data, _, _ = standardize(data, means, stds)
+    if len(data.shape[3]) < 3:
+        data = data.reshape(data.shape[0], data.shape[1], data.shape[2], 1)
+    else:
+        data = standardize(data, means, stds)
 
     data_node = tf.placeholder(
         tf.float32,
