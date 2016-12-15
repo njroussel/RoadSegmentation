@@ -74,7 +74,7 @@ def get_prediction(img, s, model, means, stds, img_patch_size, img_border, img_t
     if len(data.shape[3]) < 3:
         data = data.reshape(data.shape[0], data.shape[1], data.shape[2], 1)
     else:
-        data = standardize(data, means, stds)
+        data, _, _ = standardize(data, means, stds)
 
     data_node = tf.placeholder(
         tf.float32,
