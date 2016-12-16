@@ -101,9 +101,9 @@ def standardize(images, means=None, stds=None):
         else:
             std = stds[0]
         if std > 0:
-            layer /= std
+            std_layer /= std
 
-        std_data = std_layer
+        std_data = std_layer.reshape(std_layer.shape[0], std_layer.shape[1], std_layer.shape[2], 1)
         return std_data, [mean], [std]
     else:
         r_layer = images[:, :, :, 0]
@@ -154,12 +154,9 @@ def img_crop(im, w, h, border=0):
     img_width = im.shape[0]
     img_height = im.shape[1]
     if border != 0:
-        if len(im.shape) < 3:
-            im = np.array(np.pad(im, ((border, border), (border, border)), 'symmetric').T).T
-        else:
-            im = np.array([np.pad(im[:, :, i], ((border, border), (border, border)), 'symmetric').T
-                           for i in range(im.shape[2])
-                           ]).T
+        im = np.array([np.pad(im[:, :, i], ((border, border), (border, border)), 'symmetric').T
+                       for i in range(im.shape[2])
+                       ]).T
     for i in range(0, img_height, h):
         for j in range(0, img_width, w):
             im_patch = im[j:j + w + 2 * border, i:i + h + 2 * border]
