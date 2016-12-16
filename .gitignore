@@ -5,8 +5,10 @@ training/*
 TileDownloader/groundtruth/*
 TileDownloader/images/*
 predictions_training/*
+predictions_training_post/*
 test_set_images_bak/*
 test_predictions/*
+test_predictions_post/*
 .idea/*
 __pycache__/*
 runs.txt
