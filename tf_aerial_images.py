@@ -42,7 +42,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     sat_images, label_images = read_images(train_data_filename, train_labels_filename, TRAINING_SIZE,
                                            FILE_REGEX)
 
-    perm_indices = np.random.permutation(range(sat_images.shape[0]))
+    perm_indices = np.random.permutation(range(sat_images[0:100].shape[0]))
     train_limit = int(VALIDATION_TRAIN_PERC * len(perm_indices))
     val_limit = int(VALIDATION_VAL_PERC * len(perm_indices))
 
@@ -57,6 +57,17 @@ def main(argv=None):  # pylint: disable=unused-argument
     test_data = sat_images[perm_indices[train_limit + val_limit:]]
     test_data, _, _ = standardize(test_data, means=means, stds=stds)
     test_labels = label_images[perm_indices[train_limit + val_limit:]]
+
+    if TRAINING_SIZE > 100:
+        # Add our images to training set only
+        to_add = int(min(train_limit, TRAINING_SIZE-100))
+        excess_sat_images = sat_images[100:, :, :, :]
+        excess_label_images = label_images[100:, :, :]
+
+        excess_perm = np.random.permutation(range(excess_sat_images.shape[0]))
+
+        train_data = np.append(train_data, excess_sat_images[excess_perm[:to_add]], axis=0)
+        train_labels = np.append(train_labels, excess_label_images[excess_perm[:to_add]], axis=0)
 
     if ROTATE_IMAGES:
         for i in range(train_data.shape[0]):
