@@ -10,3 +10,4 @@ test_predictions/*
 .idea/*
 __pycache__/*
 runs.txt
+test_predictions_post/*
