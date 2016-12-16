@@ -316,9 +316,9 @@ def main(argv=None):  # pylint: disable=unused-argument
                 os.mkdir(prediction_training_dir)
             for i in range(1, TRAINING_SIZE + 1):
                 print('prediction {}'.format(i))
-                pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                                       IMG_PATCH_SIZE, IMG_BORDER, IMG_TOTAL_SIZE, NUM_CHANNELS,
-                                                       EVAL_BATCH_SIZE, NUM_LABELS)
+                pimg = get_prediction_image(train_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                            IMG_PATCH_SIZE, IMG_BORDER, IMG_TOTAL_SIZE, NUM_CHANNELS,
+                                            EVAL_BATCH_SIZE, NUM_LABELS)
                 Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
                 oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX, means, stds,
                                                    IMG_PATCH_SIZE, IMG_BORDER, IMG_TOTAL_SIZE, NUM_CHANNELS,
@@ -336,9 +336,9 @@ def main(argv=None):  # pylint: disable=unused-argument
                 os.mkdir(test_dir)
             for i in range(1, TEST_SIZE + 1):
                 print('test prediction {}'.format(i))
-                pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                                       IMG_PATCH_SIZE, IMG_BORDER, IMG_TOTAL_SIZE, NUM_CHANNELS,
-                                                       EVAL_BATCH_SIZE, NUM_LABELS)
+                pimg = get_prediction_image(test_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                            IMG_PATCH_SIZE, IMG_BORDER, IMG_TOTAL_SIZE, NUM_CHANNELS,
+                                            EVAL_BATCH_SIZE, NUM_LABELS)
                 Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
                 oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds,
                                                    IMG_PATCH_SIZE, IMG_BORDER, IMG_TOTAL_SIZE, NUM_CHANNELS,

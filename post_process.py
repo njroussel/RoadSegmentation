@@ -49,12 +49,19 @@ def main(argv=None):  # pylint: disable=unused-argument
     val_limit = int(VALIDATION_VAL_PERC * len(perm_indices))
 
     train_data = prediction_images[perm_indices[0:train_limit]]
+    train_data = train_data.reshape(train_data.shape[0], train_data.shape[1], train_data.shape[2], 1)
+    train_data, means, stds = standardize(train_data)
     train_labels = label_images[perm_indices[0:train_limit]]
 
     validation_data = prediction_images[perm_indices[train_limit:train_limit + val_limit]]
+    validation_data = validation_data.reshape(validation_data.shape[0], validation_data.shape[1],
+                                              validation_data.shape[2], 1)
+    validation_data, _, _ = standardize(validation_data, means, stds)
     validation_labels = label_images[perm_indices[train_limit:train_limit + val_limit]]
 
     test_data = prediction_images[perm_indices[train_limit + val_limit:]]
+    test_data = test_data.reshape(test_data.shape[0], test_data.shape[1], test_data.shape[2], 1)
+    test_data, _, _ = standardize(test_data, means, stds)
     test_labels = label_images[perm_indices[train_limit + val_limit:]]
 
     if ROTATE_IMAGES:
@@ -66,16 +73,12 @@ def main(argv=None):  # pylint: disable=unused-argument
             train_labels = np.append(train_labels, [rot_label], axis=0)
 
     train_data = extract_data(train_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
-    train_data = train_data.reshape(train_data.shape[0], train_data.shape[1], train_data.shape[2], 1)
     train_labels = extract_labels(train_labels, PP_IMG_PATCH_SIZE)
 
     validation_data = extract_data(validation_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
-    validation_data = validation_data.reshape(validation_data.shape[0], validation_data.shape[1],
-                                              validation_data.shape[2], 1)
     validation_labels = extract_labels(validation_labels, PP_IMG_PATCH_SIZE)
 
     test_data = extract_data(test_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
-    test_data = test_data.reshape(test_data.shape[0], test_data.shape[1], test_data.shape[2], 1)
     test_labels = extract_labels(test_labels, PP_IMG_PATCH_SIZE)
 
     num_epochs = PP_NUM_EPOCHS
@@ -308,10 +311,10 @@ def main(argv=None):  # pylint: disable=unused-argument
             for i in range(1, PP_TRAINING_SIZE + 1):
                 print('prediction {}'.format(i))
                 FILE_REGEX = "satImage_%.3d"
-                pimg = get_prediction_with_groundtruth(train_data_filename, i, s, model, FILE_REGEX, 0, 1,
-                                                       PP_IMG_PATCH_SIZE, PP_IMG_BORDER,
-                                                       PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
-                                                       PP_NUM_LABELS)
+                pimg = get_prediction_image(train_data_filename, i, s, model, FILE_REGEX, means, stdspytho,
+                                            PP_IMG_PATCH_SIZE, PP_IMG_BORDER,
+                                            PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
+                                            PP_NUM_LABELS)
                 Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
 
         if PP_TEST_PREDICTIONS:
@@ -325,10 +328,10 @@ def main(argv=None):  # pylint: disable=unused-argument
                 os.mkdir(test_dir)
             for i in range(1, TEST_SIZE + 1):
                 print('test prediction {}'.format(i))
-                pimg = get_prediction_with_groundtruth(test_data_filename, i, s, model, FILE_REGEX, 0, 1,
-                                                       PP_IMG_PATCH_SIZE, PP_IMG_BORDER,
-                                                       PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
-                                                       PP_NUM_LABELS)
+                pimg = get_prediction_image(test_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                            PP_IMG_PATCH_SIZE, PP_IMG_BORDER,
+                                            PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
+                                            PP_NUM_LABELS)
                 Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
 
     print("Begin validation")

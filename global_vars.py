@@ -5,7 +5,7 @@ TRAINING_SIZE = 400
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 64  # 64
 BATCH_SIZE = 64
-NUM_EPOCHS = 7  # Will later be determined by validation.
+NUM_EPOCHS = 3  # Will later be determined by validation.
 ROTATE_IMAGES = False
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
 TRAIN_PREDICTIONS = True  # If True, restore existing model instead of training a new one
@@ -15,7 +15,7 @@ RECORDING_STEP = 1000
 LEARNING_RATE = 0.001
 
 # Convolution network architecture
-CONV_ARCH = [2, 2, 4] # The best architecture so far on validation.
+CONV_ARCH = [1,1] # The best architecture so far on validation.
         # [2, 4, 4, 6] Best on test set.
         # We will keep both, but mostly use [2, 2, 4] because of our limited
         # computation power.
@@ -44,11 +44,11 @@ COMPUTE_VALIDATION_F1_SCORE_FOR_EACH_EPOCH = False
 
 PP_NUM_CHANNELS = 1  # Binary images
 PP_NUM_LABELS = 2
-PP_TRAINING_SIZE = 100
+PP_TRAINING_SIZE = 10
 PP_SEED = 43212  # Set to None for random seed.
-PP_EVAL_BATCH_SIZE = 64  # 64
+PP_EVAL_BATCH_SIZE = 128  # 64
 PP_BATCH_SIZE = 64
-PP_NUM_EPOCHS = 3 # Will later be determined by validation.
+PP_NUM_EPOCHS = 3  # Will later be determined by validation.
 PP_ROTATE_IMAGES = False
 PP_RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
 PP_TRAIN_PREDICTIONS = False  # If True, restore existing model instead of training a new one
@@ -63,10 +63,10 @@ PP_CONV_ARCH = [1]
 # Set image patch size in pixels
 # IMG_PATCH_SIZE should be a multiple of 4
 # image size should be an integer multiple of this number!
-PP_IMG_PATCH_SIZE = 2  # MUST BE PAIR
+PP_IMG_PATCH_SIZE = 2  # MUST BE EVEN
 
 # Border for enhanced context.
-PP_IMG_BORDER = 5 # Will be set after archi is found
+PP_IMG_BORDER = 6  # MUST BE EVEN (could eventually be even ....)
 
 PP_IMG_TOTAL_SIZE = PP_IMG_PATCH_SIZE + 2 * PP_IMG_BORDER
 
