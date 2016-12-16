@@ -1,7 +1,7 @@
 NUM_CHANNELS = 3  # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2
-TRAINING_SIZE = 400
+TRAINING_SIZE = 100
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 64  # 64
 BATCH_SIZE = 64
@@ -15,7 +15,7 @@ RECORDING_STEP = 1000
 LEARNING_RATE = 0.001
 
 # Convolution network architecture
-CONV_ARCH = [1,1] # The best architecture so far on validation.
+CONV_ARCH = [2, 2, 4] # The best architecture so far on validation.
         # [2, 4, 4, 6] Best on test set.
         # We will keep both, but mostly use [2, 2, 4] because of our limited
         # computation power.
