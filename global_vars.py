@@ -4,9 +4,10 @@ NUM_LABELS = 2
 TRAINING_SIZE = 100
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 64  # 64
-BATCH_SIZE = 64
+BATCH_SIZE = 16
 NUM_EPOCHS = 50  # Will later be determined by validation.
-ROTATE_IMAGES = False
+ROTATION_AMOUNT = 3
+ROTATE_IMAGES = True
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
 TRAIN_PREDICTIONS = True  # If True, restore existing model instead of training a new one
 TEST_PREDICTIONS = True
@@ -26,7 +27,7 @@ CONV_ARCH = [2, 2, 4] # The best architecture so far on validation.
 IMG_PATCH_SIZE = 16
 
 # Border for enhanced context.
-IMG_BORDER = 16  # Will be set after archi is found
+IMG_BORDER = 8  # Will be set after archi is found
 
 IMG_TOTAL_SIZE = IMG_PATCH_SIZE + 2 * IMG_BORDER
 
@@ -47,9 +48,10 @@ PP_NUM_LABELS = 2
 PP_TRAINING_SIZE = 100
 PP_SEED = 43212  # Set to None for random seed.
 PP_EVAL_BATCH_SIZE = 128  # 64
-PP_BATCH_SIZE = 64
+PP_BATCH_SIZE = 16
 PP_NUM_EPOCHS = 30  # Will later be determined by validation.
-PP_ROTATE_IMAGES = False
+PP_ROTATION_AMOUNT = 3
+PP_ROTATE_IMAGES = True
 PP_RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
 PP_TRAIN_PREDICTIONS = False  # If True, restore existing model instead of training a new one
 PP_TEST_PREDICTIONS = True
@@ -66,7 +68,7 @@ PP_CONV_ARCH = [1]
 PP_IMG_PATCH_SIZE = 2  # MUST BE EVEN
 
 # Border for enhanced context.
-PP_IMG_BORDER = 12  # MUST BE EVEN (could eventually be even ....)
+PP_IMG_BORDER = 10  # MUST BE EVEN (could eventually be even ....)
 
 PP_IMG_TOTAL_SIZE = PP_IMG_PATCH_SIZE + 2 * PP_IMG_BORDER
 

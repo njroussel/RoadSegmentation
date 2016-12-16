@@ -37,9 +37,9 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     # Extract it into np arrays.
     FILE_REGEX = "prediction_%d"
-    prediction_images = read_binary_images(train_data_filename, TRAINING_SIZE, FILE_REGEX)
+    prediction_images = read_binary_images(train_data_filename, PP_TRAINING_SIZE, FILE_REGEX)
     FILE_REGEX = "satImage_%.3d"
-    label_images = read_binary_images(train_labels_filename, TRAINING_SIZE, FILE_REGEX)
+    label_images = read_binary_images(train_labels_filename, PP_TRAINING_SIZE, FILE_REGEX)
 
     prediction_images = quantize_binary_images(prediction_images, IMG_PATCH_SIZE, PP_IMG_PATCH_SIZE)
     label_images = quantize_binary_images(label_images, IMG_PATCH_SIZE, PP_IMG_PATCH_SIZE)
@@ -66,11 +66,12 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     if ROTATE_IMAGES:
         for i in range(train_data.shape[0]):
-            angle = np.random.rand() * 360
-            rot_data = rotate_image(train_data[i], angle)
-            rot_label = rotate_image(train_labels[i], angle)
-            train_data = np.append(train_data, [rot_data], axis=0)
-            train_labels = np.append(train_labels, [rot_label], axis=0)
+            for j in range(PP_ROTATION_AMOUNT):
+                angle = np.random.rand() * 360
+                rot_data = rotate_image(train_data[i], angle)
+                rot_label = rotate_image(train_labels[i], angle)
+                train_data = np.append(train_data, [rot_data], axis=0)
+                train_labels = np.append(train_labels, [rot_label], axis=0)
 
     train_data = extract_data(train_data, PP_IMG_PATCH_SIZE, PP_IMG_BORDER)
     train_labels = extract_labels(train_labels, PP_IMG_PATCH_SIZE)
