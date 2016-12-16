@@ -47,7 +47,6 @@ def get_prediction_with_groundtruth(filename, image_idx, s, model, file_regex, m
 def eval_in_batches(data, sess, eval_prediction, data_node, eval_batch_size, num_labels):
     """Get all predictions for a dataset by running it in small batches."""
     size = data.shape[0]
-
     if size < eval_batch_size:
         raise ValueError("batch size for evals larger than dataset: %d" % size)
 
@@ -72,9 +71,10 @@ def get_prediction(img, s, model, means, stds, img_patch_size, img_border, img_t
                    eval_batch_size, num_labels):
     data = np.asarray(img_crop(img, img_patch_size, img_patch_size, border=img_border))
     if len(data.shape) < 4:
+        print("HAPPENED")
         data = data.reshape(data.shape[0], data.shape[1], data.shape[2], 1)
-    else:
-        data, _, _ = standardize(data, means, stds)
+
+    data, _, _ = standardize(data, means, stds)
 
     data_node = tf.placeholder(
         tf.float32,

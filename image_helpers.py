@@ -76,7 +76,8 @@ def read_images(train_filename, label_filename, num_images, file_regex):
 def quantize_binary_images(images, quantization_patch_size, output_patch_size):
     quantized_images = []
     for image in images:
-        single_pixel_image = extract_labels([image], quantization_patch_size).reshape((-1, int(image.shape[0] / quantization_patch_size), 2))[:, :, 0].T
+        single_pixel_image = extract_labels([image], quantization_patch_size).reshape(
+            (-1, int(image.shape[0] / quantization_patch_size), 2))[:, :, 0].T
         output_patch_image = ndimage.zoom(single_pixel_image, output_patch_size, order=0)
         quantized_images.append(output_patch_image)
 
@@ -88,41 +89,58 @@ def standardize(images, means=None, stds=None):
         Returns std_patches, means, stds.
             @param images : Patches to standardize.
     """
-    r_layer = images[:, :, :, 0]
-    g_layer = images[:, :, :, 1]
-    b_layer = images[:, :, :, 2]
+    if images.shape[3] == 1:
+        layer = images[:, :, :, 0]
+        if means is None:
+            mean = np.mean(layer)
+        else:
+            mean = means[0]
+        std_layer = layer - mean
+        if stds is None:
+            std = np.std(layer)
+        else:
+            std = stds[0]
+        if std > 0:
+            layer /= std
 
-    if means is None:
-        r_mean = np.mean(r_layer)
-        g_mean = np.mean(g_layer)
-        b_mean = np.mean(b_layer)
+        std_data = std_layer
+        return std_data, [mean], [std]
     else:
-        r_mean = means[0]
-        g_mean = means[1]
-        b_mean = means[2]
+        r_layer = images[:, :, :, 0]
+        g_layer = images[:, :, :, 1]
+        b_layer = images[:, :, :, 2]
 
-    std_r_layer = r_layer - r_mean
-    std_g_layer = g_layer - g_mean
-    std_b_layer = b_layer - b_mean
+        if means is None:
+            r_mean = np.mean(r_layer)
+            g_mean = np.mean(g_layer)
+            b_mean = np.mean(b_layer)
+        else:
+            r_mean = means[0]
+            g_mean = means[1]
+            b_mean = means[2]
 
-    if stds is None:
-        r_std = np.std(r_layer)
-        g_std = np.std(g_layer)
-        b_std = np.std(b_layer)
-    else:
-        r_std = stds[0]
-        g_std = stds[1]
-        b_std = stds[2]
+        std_r_layer = r_layer - r_mean
+        std_g_layer = g_layer - g_mean
+        std_b_layer = b_layer - b_mean
 
-    if r_std > 0:
-        std_r_layer /= r_std
-    if g_std > 0:
-        std_g_layer /= g_std
-    if b_std > 0:
-        std_b_layer /= b_std
+        if stds is None:
+            r_std = np.std(r_layer)
+            g_std = np.std(g_layer)
+            b_std = np.std(b_layer)
+        else:
+            r_std = stds[0]
+            g_std = stds[1]
+            b_std = stds[2]
 
-    std_data = np.stack((std_r_layer, std_g_layer, std_b_layer), axis=3)
-    return std_data, [r_mean, g_mean, b_mean], [r_std, g_std, b_std]
+        if r_std > 0:
+            std_r_layer /= r_std
+        if g_std > 0:
+            std_g_layer /= g_std
+        if b_std > 0:
+            std_b_layer /= b_std
+
+        std_data = np.stack((std_r_layer, std_g_layer, std_b_layer), axis=3)
+        return std_data, [r_mean, g_mean, b_mean], [r_std, g_std, b_std]
 
 
 # Extract patches from a given image
@@ -135,14 +153,12 @@ def img_crop(im, w, h, border=0):
     list_patches = []
     img_width = im.shape[0]
     img_height = im.shape[1]
-    is_2d = len(im.shape) < 3
-
-    if (border != 0):
-        if is_2d:
+    if border != 0:
+        if len(im.shape) < 3:
             im = np.array(np.pad(im, ((border, border), (border, border)), 'symmetric').T).T
         else:
             im = np.array([np.pad(im[:, :, i], ((border, border), (border, border)), 'symmetric').T
-                           for i in range(3)
+                           for i in range(im.shape[2])
                            ]).T
     for i in range(0, img_height, h):
         for j in range(0, img_width, w):
@@ -261,7 +277,7 @@ def label_to_img(imgwidth, imgheight, w, h, labels):
             else:
                 l = 0
             array_labels[j:j + w, i:i + h] = l
-            idx = idx + 1
+            idx += 1
     return array_labels
 
 
