@@ -315,6 +315,8 @@ def main(argv=None):  # pylint: disable=unused-argument
                                             PP_IMG_PATCH_SIZE, PP_IMG_BORDER,
                                             PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
                                             PP_NUM_LABELS)
+                pimg = quantize_binary_images([pimg], PP_IMG_PATCH_SIZE, IMG_PATCH_SIZE)[0]
+                pimg = img_float_to_uint8(pimg)
                 Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
 
         if PP_TEST_PREDICTIONS:
@@ -332,6 +334,8 @@ def main(argv=None):  # pylint: disable=unused-argument
                                             PP_IMG_PATCH_SIZE, PP_IMG_BORDER,
                                             PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
                                             PP_NUM_LABELS)
+                pimg = quantize_binary_images([pimg], PP_IMG_PATCH_SIZE, IMG_PATCH_SIZE)[0]
+                pimg = img_float_to_uint8(pimg)
                 Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
 
     print("Begin validation")
