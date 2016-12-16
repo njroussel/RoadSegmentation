@@ -313,10 +313,6 @@ def main(argv=None):  # pylint: disable=unused-argument
                                                        PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
                                                        PP_NUM_LABELS)
                 Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
-                oimg = get_prediction_with_overlay(train_data_filename, i, s, model, FILE_REGEX, 0, 1,
-                                                   PP_IMG_PATCH_SIZE, PP_IMG_BORDER, PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS,
-                                                   PP_EVAL_BATCH_SIZE, PP_NUM_LABELS)
-                oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
 
         if PP_TEST_PREDICTIONS:
             ## Run on test set.
@@ -334,11 +330,6 @@ def main(argv=None):  # pylint: disable=unused-argument
                                                        PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
                                                        PP_NUM_LABELS)
                 Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
-                oimg = get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, 0, 1, PP_IMG_PATCH_SIZE,
-                                                   PP_IMG_BORDER, PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS,
-                                                   PP_EVAL_BATCH_SIZE,
-                                                   PP_NUM_LABELS)
-                oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
     print("Begin validation")
     # Run Nico's code.
