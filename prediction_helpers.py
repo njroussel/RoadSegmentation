@@ -35,7 +35,10 @@ def get_prediction_image(filename, image_idx, s, model, file_regex, means, stds,
     img = mpimg.imread(image_filename)
     tmp = np.array(img)
     if len(tmp.shape) == 2:
+        imgs = quantize_binary_images([img], IMG_PATCH_SIZE, PP_IMG_PATCH_SIZE)
+        img = imgs[0]
         img = img.reshape(img.shape[0], img.shape[1], 1)
+
 
     img_prediction = get_prediction(img, s, model, means, stds, img_patch_size, img_border, img_total_size,
                                     num_channels, eval_batch_size, num_labels)
