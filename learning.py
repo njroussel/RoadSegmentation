@@ -314,16 +314,16 @@ def main(argv=None):
         acc = batch_sum(s, accuracy_sum, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
         accuracy = acc / (int(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE) * global_vars.EVAL_BATCH_SIZE)
 
-        print("Accuracy rating is :", accuracy_test)
+        print("Accuracy rating is :", accuracy)
 
         print("Scoring on testing set")
 
         acc = batch_sum(s, accuracy_sum, test_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
         accuracy = acc / (int(len(test_set[0]) / global_vars.EVAL_BATCH_SIZE) * global_vars.EVAL_BATCH_SIZE)
 
-        print("Accuracy rating is :", accuracy_test)
+        print("Accuracy rating is :", accuracy)
 
-        
+
 
                     
 def batch_sum(s, func_sum, data_set, eval_batch_size, eval_data_node, eval_label_node):
