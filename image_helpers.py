@@ -69,8 +69,9 @@ def read_3channel_images(image_filename, num_images, file_regex):
 
 
 def read_images(train_filename, label_filename, num_images, file_regex):
-    return read_3channel_images(train_filename, num_images, file_regex), read_binary_images(label_filename, num_images,
-                                                                                            file_regex)
+    return (
+        read_3channel_images(train_filename, num_images, file_regex), 
+        read_binary_images(label_filename, num_images, file_regex))
 
 
 def quantize_binary_images(images, quantization_patch_size, output_patch_size):
