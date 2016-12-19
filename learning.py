@@ -12,6 +12,7 @@ import progressbar
 import prediction_helpers as pred_help
 import image_helpers as img_help
 import global_vars
+from tf_helpers import *
 
 # Initialisation of some flags for tensor flow
 # (In this case we declare the directory to store nets as we go)
@@ -23,71 +24,6 @@ tf.app.flags.DEFINE_string(
 FLAGS = tf.app.flags.FLAGS
 
 SEED = global_vars.SEED
-
-# Function that computes whatever score you want given a scoring function
-def compute_score(scoring_f, data, labels, session, model):
-
-    pred = pred_help.get_prediction_from_patches(
-        data, session, model, global_vars.EVAL_BATCH_SIZE,
-        global_vars.IMG_TOTAL_SIZE, global_vars.NUM_CHANNELS,
-        global_vars.NUM_LABELS)
-
-    score = scoring_f(pred, labels)
-    return score
-
-def seperate_set(data, labels):
-    indices = np.random.permutation(data.shape[0])
-
-    train_len = int(global_vars.VALIDATION_TRAIN_PERC * len(indices))
-    valid_len = int(global_vars.VALIDATION_VAL_PERC * len(indices))
-
-    train_idx = indices[:train_len]
-    valid_idx = indices[train_len:train_len+valid_len]
-    test_idx = indices[train_len+valid_len:]
-
-    train_data = data[train_idx]
-    train_labels = labels[train_idx]
-    train_data, means, stds = img_help.standardize(train_data)
-
-    valid_data = data[valid_idx]
-    valid_labels = labels[valid_idx]
-    valid_data, _, _ = img_help.standardize(valid_data, means=means, stds=stds)
-
-    test_data = data[test_idx]
-    test_labels = labels[test_idx]
-    test_data, _, _ = img_help.standardize(test_data, means=means, stds=stds)
-
-    return ((train_data, train_labels), 
-        (valid_data, valid_labels), 
-        (test_data, test_labels))
-
-def preparing_data(sat_images, label_images):
-
-    # Adding rotated images
-    if global_vars.ROTATE_IMAGES:
-        perm = np.random.choice(sat_images.shape[0], sat_images.shape[0])
-        imgs = []
-        labels = []
-
-        for i in perm[0:global_vars.ROTATED_IMG]:
-            angle = np.random.rand() * 360
-            rot_img = img_help.rotate_image(sat_images[i], angle)
-            rot_label = img_help.rotate_image(label_images[i], angle)
-            imgs.append(rot_img)
-            labels.append(rot_label)
-
-        sat_images = np.append(sat_images, imgs, axis=0)
-        label_images = np.append(label_images, labels, axis=0)
-
-    print("we have a total of", len(sat_images), "images for training.")
-
-    # Extrcting patches from images
-    data = img_help.extract_data(
-        sat_images, global_vars.IMG_PATCH_SIZE, global_vars.IMG_BORDER)
-
-    labels = img_help.extract_labels(label_images, global_vars.IMG_PATCH_SIZE)
-
-    return data, labels
 
 def main(argv=None):
     # setup seeds
@@ -114,10 +50,12 @@ def main(argv=None):
         global_vars.TRAINING_SIZE, FILE_REGEX)
 
     # Getting the data on ehich we are going to train
-    data, labels = preparing_data(sat_images, label_images)
+    data, labels = preparing_data(
+        sat_images, label_images, global_vars.ROTATE_IMAGES, global_vars.ROTATED_IMG, global_vars.IMG_PATCH_SIZE, global_vars.IMG_BORDER)
 
     # Seperating our data in three distinct sets (taining, validation, testing)
-    (train_set, valid_set, test_set) = seperate_set(data, labels)
+    (train_set, valid_set, test_set) = seperate_set(data, labels, global_vars.VALIDATION_TRAIN_PERC, 
+        global_vars.VALIDATION_VAL_PERC)
 
     # Balancing data
     train_set = img_help.balance_data(train_set[0], train_set[1])
@@ -149,7 +87,7 @@ def main(argv=None):
 
     # Define the parameters of the convolutional layers
     conv_params, last_depth = params_conv_layers(
-        global_vars.CONV_ARCH, global_vars.CONV_DEPTH, global_vars.NUM_CHANNELS)
+        global_vars.CONV_ARCH, global_vars.CONV_DEPTH, global_vars.NUM_CHANNELS, SEED)
 
     pool_fact = 2 ** len(global_vars.CONV_ARCH)
 
@@ -158,7 +96,7 @@ def main(argv=None):
 
     size = int(global_vars.IMG_TOTAL_SIZE / pool_fact * global_vars.IMG_TOTAL_SIZE / pool_fact * last_depth)
 
-    fc_params = params_fc_layers(global_vars.FC_ARCH, global_vars.FC_DEPTH, size, global_vars.NUM_LABELS)
+    fc_params = params_fc_layers(global_vars.FC_ARCH, global_vars.FC_DEPTH, size, global_vars.NUM_LABELS, SEED)
 
     # Definition of the complete cnn model.
     def model(data, train=False):
@@ -176,7 +114,7 @@ def main(argv=None):
 
         print(reshape.get_shape())
 
-        out = init_fc_layers(global_vars.FC_ARCH, fc_params, reshape, train)
+        out = init_fc_layers(global_vars.FC_ARCH, fc_params, reshape, train, SEED)
 
         return out
 
@@ -207,33 +145,17 @@ def main(argv=None):
     # Predictions for the minibatch, validation set and test set.
     train_prediction = tf.nn.softmax(logits)
     # Compute predictions for validation and test
-    correct_prediction_train = tf.equal(
+    correct_predictions_train = tf.equal(
         tf.argmax(train_prediction,1), tf.argmax(train_label_node,1))
     # Accuracy for training
-    accuracy_train = tf.reduce_mean(tf.cast(correct_prediction_train, tf.float32))
+    accuracy_train = tf.reduce_mean(tf.cast(correct_predictions_train, tf.float32))
 
     # Validation / Testing set predictions
     predictions = tf.nn.softmax(model(eval_data_node))
     # Compute predictions for validation and test
-    correct_prediction = tf.equal(tf.argmax(predictions,1), tf.argmax(eval_label_node,1))
+    correct_predictions = tf.equal(tf.argmax(predictions,1), tf.argmax(eval_label_node,1))
     # Accuracy for test as a sum, as we will have to do a mean by patch
-    accuracy_sum = tf.reduce_sum(tf.cast(correct_prediction, tf.float32))
-
-    truePos = tf.reduce_sum(
-        tf.cast(
-            tf.equal(tf.argmax(tf.boolean_mask(predictions, correct_prediction), 1), 1),
-            tf.float32))
-
-    falsePos = tf.reduce_sum(
-        tf.cast(
-            tf.equal( tf.argmax(tf.boolean_mask(predictions, tf.logical_not(correct_prediction)), 1), 1),
-            tf.float32))
-            
-    falseNeg = tf.reduce_sum(
-        tf.cast(
-            tf.equal(
-                tf.argmax(tf.boolean_mask(predictions, tf.logical_not(correct_prediction)), 1), 0),
-                tf.float32))
+    accuracy_sum = tf.reduce_sum(tf.cast(correct_predictions, tf.float32))
 
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
@@ -250,15 +172,13 @@ def main(argv=None):
     else:
         # run initialisation of variables
         s.run(init)
-
         print('Initialized!')
+
         # Loop through training steps.
         print('Total number of iterations : ' + str(int(num_epochs * len(train_set[0]) / global_vars.BATCH_SIZE)))
 
         train_size = len(train_set[0])
-
-        i = 0
-        epoch_bar = progressbar.ProgressBar(max_value=num_epochs)
+        epoch_bar = progressbar.ProgressBar(max_value=num_epochs).start()
 
         try:
             batch_size = global_vars.BATCH_SIZE
@@ -284,9 +204,7 @@ def main(argv=None):
                     if step % global_vars.RECORDING_STEP == 0:
                         _, train_acc, l = s.run(
                             [optimizer, accuracy_train, loss], feed_dict=feed_dict)
-                        
-                        print("Recording step, might take a long time")
-                        
+
                         acc = batch_sum(s, accuracy_sum, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
                         valid_acc = acc / (int(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE) * global_vars.EVAL_BATCH_SIZE)
@@ -303,11 +221,15 @@ def main(argv=None):
                     else:
                         batch_bar.update(step)
                         s.run(optimizer, feed_dict=feed_dict)
+
+                batch_bar.finish()
                     
                 # What do here ? nothing normally as done at beginning of each epoch
         except KeyboardInterrupt:
             print("Interrupted at epoch ", epoch + 1)
             pass
+
+        epoch_bar.finish()
 
         print("Scoring on validation set")
 
@@ -323,123 +245,27 @@ def main(argv=None):
 
         print("Accuracy rating is :", accuracy)
 
+        f1_thresh_from = 0.25
+        f1_thresh_to = 0.75
+        f1_thresh_step = 0.05
 
+        threshold = tf.Variable(f1_thresh_from, name="threshold")
 
-                    
-def batch_sum(s, func_sum, data_set, eval_batch_size, eval_data_node, eval_label_node):
-    # TODO: put this in a function
-    # Evaluating accuracy for EVAL_BATCH_SIZE parts of the validation set
-    set_len = len(data_set[0])
-    batch_nbr = int(set_len / eval_batch_size) + 1
-    batch_idxs = np.array_split(range(set_len), batch_nbr)
-    
-    b_update = 0
-    score_bar = progressbar.ProgressBar(max_value=len(batch_idxs))
+        predictions_0 = tf.cast(tf.transpose(predictions)[0] > threshold, tf.int64)
+        correct_predictions_thresh = tf.equal(predictions_0, tf.argmax(eval_label_node,1))
+        
+        init_op = tf.global_variables_initializer()
 
-    acc = 0
-    
-    for batch_idx in batch_idxs:
-        score_bar.update(b_update)
-        b_update += 1
+        for thresh in np.linspace(0.25,0.75, 10):
+            s.run(init_op)
+            threshold = thresh
 
-        if len(batch_idx) < eval_batch_size:
-            batch_idx = range(set_len)[-eval_batch_size:]
+            print("Threshohld :",tresh)
 
-        feed_dict = {eval_data_node: data_set[0][batch_idx],
-            eval_label_node: data_set[1][batch_idx]}
+            f1_score = compute_f1_tf(s, predictions_0, correct_predictions_thresh, valid_set, 
+                global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
-        acc += s.run(func_sum, feed_dict=feed_dict)
-
-    return acc
-
-
-def init_fc_layers(fc_arch, fc_params, prev_layer, dropout):
-    # convolution layers
-
-    for i in range(fc_arch):
-        print(i)
-        prev_layer = tf.nn.relu(tf.matmul(prev_layer, fc_params[i][0]) + fc_params[i][1])
-        if dropout:
-            prev_layer = tf.nn.dropout(prev_layer, 0.5, seed=SEED)
-
-    fc_end = tf.matmul(prev_layer, fc_params[-1][0]) + fc_params[-1][1]
-
-    return fc_end  
-
-def init_conv_layers(conv_arch, conv_params, prev_layer):
-    # convolution layers
-
-    for i, n_conv in enumerate(conv_arch):
-
-        for layer in range(n_conv):
-            # 2D convolution
-            conv = tf.nn.conv2d(
-                prev_layer,
-                conv_params[i][layer][0],
-                strides=[1, 1, 1, 1],
-                padding='SAME')
-
-            # Bias and rectified linear non-linearity.
-            relu = tf.nn.relu(tf.nn.bias_add(conv, conv_params[i][layer][1]))
-            prev_layer = relu
-
-        prev_layer = tf.nn.max_pool(
-            prev_layer,
-            ksize=[1, 2, 2, 1],
-            strides=[1, 2, 2, 1],
-            padding='SAME')
-
-    return prev_layer
-
-def params_conv_layers(conv_arch, conv_depth, channels):
-    # init of conv parameters
-    conv_params = [None] * len(conv_arch)
-
-    # init origin depth
-    prev_depth = channels
-    for i, n_conv in enumerate(conv_arch):
-        conv_params[i] = [None] * n_conv
-        new_depth = conv_depth[i]
-        for layer in range(n_conv):
-            conv_weights = tf.Variable(
-                tf.truncated_normal(
-                    [3, 3, prev_depth, new_depth],  # 3x3 filter, depth augmenting by few steps.
-                    stddev=0.1,
-                    seed=SEED))
-            conv_biases = tf.Variable(tf.zeros([new_depth]))
-            conv_params[i][layer] = (conv_weights, conv_biases)
-            prev_depth = new_depth
-    
-    print(new_depth)
-
-    return conv_params, new_depth
-
-def params_fc_layers(fc_arch, fc_depth, depth_conv, last_depth):
-
-    fc_param = []
-
-    print(depth_conv)
-
-    prev_depth = depth_conv
-    for i in range(fc_arch):
-        weights = tf.Variable(  # fully connected, depth 512.
-            tf.truncated_normal(
-                [prev_depth, fc_depth[i]],
-                stddev=0.1,
-                seed=SEED))
-        biases = tf.Variable(tf.constant(0.1, shape=[fc_depth[i]]))
-        fc_param.append((weights, biases))
-        prev_depth = fc_depth[i]
-
-    last_weights = tf.Variable(
-        tf.truncated_normal(
-            [prev_depth, last_depth],
-            stddev=0.1,
-            seed=SEED))
-    last_biases = tf.Variable(tf.constant(0.1, shape=[last_depth]))
-    fc_param.append((last_weights, last_biases))
-
-    return fc_param
+            print("F1 score :",f1_score)
 
 
 if __name__ == '__main__':
