@@ -202,22 +202,30 @@ def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size
     set_len = len(data_set[0])
     batch_nbr = int(np.ceil(set_len / eval_batch_size))
     batch_idxs = np.array_split(range(set_len), batch_nbr)
-    
+
+    print("set length :", set_len)
+    print("nbr of batches :", batch_nbr)
+
     b_update = 0
-    score_bar = progressbar.ProgressBar(max_value=len(batch_idxs)).start()
-    
+    score_bar = progressbar.ProgressBar(max_value=len(batch_idxs))
+
     for batch_idx in batch_idxs:
-        score_bar.update(b_update)
-        b_update += 1
 
         feed_dict = {eval_data_node: data_set[0][batch_idx],
             eval_label_node: data_set[1][batch_idx]}
 
-        truePos_res, falsePos_res, true_neg, falseNeg_res = s.run([truePos, falsePos, trueNeg, falseNeg], feed_dict=feed_dict)
+        truePos_res, falsePos_res, trueNeg_res, falseNeg_res = s.run([truePos, falsePos, trueNeg, falseNeg], feed_dict=feed_dict)
 
         TP += truePos_res
         FP += falsePos_res
+        TN += trueNeg_res
         FN += falseNeg_res
+
+        b_update += 1
+        score_bar.update(b_update)
+    
+    score_bar.finish()
+
 
     print("TP",TP)
     print("FP",FP)

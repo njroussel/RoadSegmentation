@@ -117,8 +117,6 @@ def main(argv=None):
             conv_end,
             [-1, conv_end_shape[1] * conv_end_shape[2] * conv_end_shape[3]])
 
-        print(reshape.get_shape())
-
         out = init_fc_layers(global_vars.FC_ARCH, fc_params, reshape, train, SEED)
 
         return out
@@ -148,19 +146,26 @@ def main(argv=None):
     optimizer = adam_opt.minimize(loss, global_step=batch)
 
     # Predictions for the minibatch, validation set and test set.
-    train_prediction = tf.nn.softmax(logits)
+    train_prediction_graph = tf.nn.softmax(logits)
     # Compute predictions for validation and test
-    correct_predictions_train = tf.equal(
-        tf.argmax(train_prediction,1), tf.argmax(train_label_node,1))
+    correct_predictions_train_graph = tf.equal(
+        tf.argmax(train_prediction_graph,1), tf.argmax(train_label_node,1))
     # Accuracy for training
-    accuracy_train = tf.reduce_mean(tf.cast(correct_predictions_train, tf.float32))
+    accuracy_train_graph = tf.reduce_mean(tf.cast(correct_predictions_train_graph, tf.float32))
 
     # Validation / Testing set predictions
-    predictions = tf.nn.softmax(model(eval_data_node))
+    eval_predictions_graph = tf.nn.softmax(model(eval_data_node))
     # Compute predictions for validation and test
-    correct_predictions = tf.equal(tf.argmax(predictions,1), tf.argmax(eval_label_node,1))
+    eval_correct_predictions_graph = tf.equal(tf.argmax(eval_predictions_graph,1), tf.argmax(eval_label_node,1))
     # Accuracy for test as a sum, as we will have to do a mean by patch
-    accuracy_graph = tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
+    eval_accuracy_graph = tf.reduce_mean(tf.cast(eval_correct_predictions_graph, tf.float32))
+
+    # Will be used later when we need to compute the f1 score
+    threshold_tf = tf.Variable(0, name="threshold_tf", dtype=tf.float32)
+
+    # 0 corresponds to a road, which we will consider as positive.
+    pos_predictions_thresh_graph = tf.cast(tf.transpose(eval_predictions_graph)[0] > threshold_tf, tf.int64)
+    correct_predictions_thresh = tf.equal(pos_predictions_thresh_graph, tf.argmax(eval_label_node,1))
 
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
@@ -207,10 +212,10 @@ def main(argv=None):
                     
                     if step % global_vars.RECORDING_STEP == 0:
                         _, train_acc, l = s.run(
-                            [optimizer, accuracy_train, loss], feed_dict=feed_dict)
+                            [optimizer, accuracy_train_graph, loss], feed_dict=feed_dict)
                         
                         print("computing intermediate accuracy")
-                        acc = batch_sum(s, accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+                        acc = batch_sum(s, eval_accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
                         valid_acc = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
 
                         print('%.2f' % (float(step) * global_vars.BATCH_SIZE / train_size) + '% of Epoch ' + str(epoch + 1))
@@ -226,7 +231,7 @@ def main(argv=None):
                         # Run the graph and fetch some of the nodes.
                         batch_bar.update(step)
                         _, l, predictions_train = s.run(
-                            [optimizer, loss, train_prediction],
+                            [optimizer, loss, train_prediction_graph],
                             feed_dict=feed_dict)
 
                 batch_bar.finish()
@@ -240,41 +245,34 @@ def main(argv=None):
 
         print("Scoring on validation set")
 
-        acc = batch_sum(s, accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+        acc = batch_sum(s, eval_accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
         accuracy = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
 
         print("Accuracy rating is :", accuracy)
 
         print("Scoring on testing set")
 
-        acc = batch_sum(s, accuracy_graph, test_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+        acc = batch_sum(s, eval_accuracy_graph, test_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
         accuracy = acc / int(np.ceil(len(test_set[0]) / global_vars.EVAL_BATCH_SIZE))
 
         print("Accuracy rating is :", accuracy)
 
         # Computing F1 score from predictions with different thresholds
-
-        threshold_tf = tf.Variable(0, name="threshold_tf", dtype=tf.float32)
-
-        # 0 corresponds to a road, which we will consider as positive.
-        predictions_0 = tf.cast(tf.transpose(predictions)[0] > threshold_tf, tf.int64)
-        correct_predictions_thresh = tf.equal(predictions_0, tf.argmax(eval_label_node,1))
-
-
-        print(predictions.get_shape())
-
         f1_scores = []
         threshs = np.linspace(0.3, 0.6, 10)
 
         for thresh in threshs:
-            init_v = tf.global_variables_initializer()
-
-            s.run(init_v)
             s.run(threshold_tf.assign(thresh))
+
+            feed_dict = {eval_data_node: valid_set[0][:64],
+                eval_label_node: valid_set[1][:64]}
+
+            print("this is the predictions probabilities")
+            print(s.run(tf.transpose(eval_predictions_graph)[0], feed_dict=feed_dict))
 
             print("Threshold :",thresh)
 
-            f1_score = compute_f1_tf(s, predictions_0, correct_predictions_thresh, valid_set, 
+            f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, valid_set, 
                 global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
             f1_scores.append(f1_score)
@@ -285,13 +283,12 @@ def main(argv=None):
         thresh = threshs[np.argmax(f1_scores)]
 
         # Test set f1_score
-
-        s.run(init_v)
+        
         s.run(threshold_tf.assign(thresh))
 
         print("Threshold :", thresh)
 
-        f1_score = compute_f1_tf(s, predictions_0, correct_predictions_thresh, test_set, 
+        f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, test_set, 
             global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
         print("Best F1 score for test set :", f1_score)
