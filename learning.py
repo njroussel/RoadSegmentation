@@ -38,6 +38,7 @@ def main(argv=None):
     train_data_filename = data_dir + 'images/'
     train_labels_filename = data_dir + 'groundtruth/'
 
+    # TODO: faire un logger
     # arrays to store the different scores
     f1_validation_per_epoch = []
     f1_training_per_epoch = []
@@ -159,7 +160,7 @@ def main(argv=None):
     # Compute predictions for validation and test
     correct_predictions = tf.equal(tf.argmax(predictions,1), tf.argmax(eval_label_node,1))
     # Accuracy for test as a sum, as we will have to do a mean by patch
-    accuracy_sum = tf.reduce_sum(tf.cast(correct_predictions, tf.float32))
+    accuracy_graph = tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
 
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
@@ -209,9 +210,8 @@ def main(argv=None):
                         _, train_acc, l = s.run(
                             [optimizer, accuracy_train, loss], feed_dict=feed_dict)
 
-                        acc = batch_sum(s, accuracy_sum, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
-
-                        valid_acc = acc / (int(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE) * global_vars.EVAL_BATCH_SIZE)
+                        acc = batch_sum(s, accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+                        valid_acc = acc / int(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE)
 
                         print('%.2f' % (float(step) * global_vars.BATCH_SIZE / train_size) + '% of Epoch ' + str(epoch + 1))
                         print("loss :",l)
@@ -223,8 +223,10 @@ def main(argv=None):
 
                         sys.stdout.flush()
                     else:
-                        batch_bar.update(step)
-                        s.run(optimizer, feed_dict=feed_dict)
+                        # Run the graph and fetch some of the nodes.
+                        _, l, predictions = s.run(
+                            [optimizer, loss, train_prediction],
+                            feed_dict=feed_dict)
 
                 batch_bar.finish()
                     
@@ -237,23 +239,21 @@ def main(argv=None):
 
         print("Scoring on validation set")
 
-        acc = batch_sum(s, accuracy_sum, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
-        accuracy = acc / (int(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE) * global_vars.EVAL_BATCH_SIZE)
+        acc = batch_sum(s, accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+        accuracy = acc / int(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE)
 
         print("Accuracy rating is :", accuracy)
 
         print("Scoring on testing set")
 
-        acc = batch_sum(s, accuracy_sum, test_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
-        accuracy = acc / (int(len(test_set[0]) / global_vars.EVAL_BATCH_SIZE) * global_vars.EVAL_BATCH_SIZE)
+        acc = batch_sum(s, accuracy_graph, test_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+        accuracy = acc / int(len(test_set[0]) / global_vars.EVAL_BATCH_SIZE)
 
         print("Accuracy rating is :", accuracy)
 
         # Computing F1 score from predictions with different thresholds
 
         threshold_tf = tf.Variable(0, name="threshold_tf", dtype=tf.float32)
-
-        print(tf.transpose(predictions)[1])
 
         predictions_1 = tf.cast(tf.transpose(predictions)[1] > threshold_tf, tf.int64)
         correct_predictions_thresh = tf.equal(predictions_1, tf.argmax(eval_label_node,1))

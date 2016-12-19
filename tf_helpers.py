@@ -68,7 +68,7 @@ def batch_sum(s, func_sum, data_set, eval_batch_size, eval_data_node, eval_label
     set_len = len(data_set[0])
     batch_nbr = int(set_len / eval_batch_size) + 1
     batch_idxs = np.array_split(range(set_len), batch_nbr)
-    
+
     b_update = 0
     score_bar = progressbar.ProgressBar(max_value=len(batch_idxs)).start()
 
@@ -178,13 +178,13 @@ def init_cov_matrix_tf(predictions, correct_predictions):
     true_pred = tf.boolean_mask(predictions, correct_predictions)
     false_pred = tf.boolean_mask(predictions, tf.logical_not(correct_predictions))
 
-    truePos = tf.reduce_sum(tf.cast(tf.equal(true_pred, 0), tf.float32))
+    truePos = tf.reduce_sum(tf.cast(tf.equal(true_pred, 1), tf.float32))
 
-    falsePos = tf.reduce_sum(tf.cast(tf.equal(false_pred, 0), tf.float32))
+    falsePos = tf.reduce_sum(tf.cast(tf.equal(false_pred, 1), tf.float32))
 
-    trueNeg = tf.reduce_sum(tf.cast(tf.equal(true_pred, 1), tf.float32))
+    trueNeg = tf.reduce_sum(tf.cast(tf.equal(true_pred, 0), tf.float32))
          
-    falseNeg = tf.reduce_sum(tf.cast(tf.equal(false_pred, 1), tf.float32))
+    falseNeg = tf.reduce_sum(tf.cast(tf.equal(false_pred, 0), tf.float32))
     
     return (truePos, falsePos, trueNeg, falseNeg)
 
@@ -192,15 +192,14 @@ def init_cov_matrix_tf(predictions, correct_predictions):
 def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size, eval_data_node, eval_label_node):
     # Evaluating accuracy for EVAL_BATCH_SIZE parts of the validation set
     
-    truePos, falsePos, trueNeg, falseNeg = init_cov_matrix_tf(predictions, correct_predictions)
+    truePos, falsePos, _, falseNeg = init_cov_matrix_tf(predictions, correct_predictions)
     
     TP = 0
     FP = 0
     FN = 0
-    TN = 0
 
     set_len = len(data_set[0])
-    batch_nbr = int(set_len / eval_batch_size) + 1
+    batch_nbr = int(np.ceil(set_len / eval_batch_size))
     batch_idxs = np.array_split(range(set_len), batch_nbr)
     
     b_update = 0
@@ -216,16 +215,14 @@ def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size
         feed_dict = {eval_data_node: data_set[0][batch_idx],
             eval_label_node: data_set[1][batch_idx]}
 
-        truePos_res, falsePos_res, trueNeg_res, falseNeg_res = s.run([truePos, falsePos, trueNeg, falseNeg], feed_dict=feed_dict)
+        truePos_res, falsePos_res, falseNeg_res = s.run([truePos, falsePos, falseNeg], feed_dict=feed_dict)
 
         TP += truePos_res
         FP += falsePos_res
         FN += falseNeg_res
-        TN += trueNeg_res
 
     print("TP",TP)
     print("FP",FP)
-    print("TN",TN)
     print("FN",FN)
 
     if TP == 0:
