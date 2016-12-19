@@ -251,16 +251,20 @@ def main(argv=None):
 
         # Computing F1 score from predictions with different thresholds
 
-        threshold_tf = tf.Variable(0, name="threshold")
+        threshold_tf = tf.Variable(0, name="threshold_tf", dtype=tf.float32)
+
+        print(tf.transpose(predictions)[1])
 
         predictions_1 = tf.cast(tf.transpose(predictions)[1] > threshold_tf, tf.int64)
         correct_predictions_thresh = tf.equal(predictions_1, tf.argmax(eval_label_node,1))
+
+        init_v = tf.global_variables_initializer()
 
         f1_scores = []
         threshs = np.linspace(0.25,0.75, 10)
 
         for thresh in threshs:
-            s.run(init)
+            s.run(init_v)
             threshold_tf = thresh
 
             print("Threshold :",thresh)
