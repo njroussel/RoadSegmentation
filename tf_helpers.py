@@ -228,6 +228,12 @@ def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size
     print("TN",TN)
     print("FN",FN)
 
+    if (TP + FP == 0):
+        return 0
+
+    if (FN + TP == 0):
+        return 0
+
     precision = TP / (FP + TP)
     recall = TP / (FN + TP)
 
