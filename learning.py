@@ -278,7 +278,7 @@ def main(argv=None):
 
         # Output test with best Threshold
 
-        thresh = threshs[np.argmax(f1_score)]
+        thresh = threshs[np.argmax(f1_scores)]
 
         # Test set f1_score
 
