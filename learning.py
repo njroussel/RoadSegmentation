@@ -277,20 +277,19 @@ def main(argv=None):
             print("F1 score :",f1_score)
 
         # Output test with best Threshold
-
         thresh = threshs[np.argmax(f1_scores)]
 
         # Test set f1_score
 
-        s.run(init)
+        s.run(init_v)
         threshold_tf = thresh
 
-        print("Threshold :",thresh)
+        print("Threshold :", thresh)
 
         f1_score = compute_f1_tf(s, predictions_1, correct_predictions_thresh, test_set, 
             global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
-        print("Best F1 score for test set :",f1_score)
+        print("Best F1 score for test set :", f1_score)
 
         if global_vars.TEST_PREDICTIONS:
             ## Run on test set.
