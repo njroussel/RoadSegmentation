@@ -238,7 +238,7 @@ def print_predictions(predictions, labels):
     print(str(max_labels) + ' ' + str(max_predictions))
 
 
-def label_to_img(imgwidth, imgheight, w, h, labels):
+def label_to_img(imgwidth, imgheight, w, h, labels, thresh=0.5):
     """ Create a binary image from labels.
         @param imgwidth : image width.
         @param imgheight : image height.
@@ -250,7 +250,7 @@ def label_to_img(imgwidth, imgheight, w, h, labels):
     idx = 0
     for i in range(0, imgheight, h):
         for j in range(0, imgwidth, w):
-            if labels[idx][0] > 0.5:
+            if labels[idx][0] > thresh:
                 l = 1
             else:
                 l = 0

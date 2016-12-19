@@ -28,9 +28,9 @@ def seperate_set(data, labels, train_per, val_per):
     test_labels = labels[test_idx]
     test_data, _, _ = img_help.standardize(test_data, means=means, stds=stds)
 
-    return ((train_data, train_labels), 
-        (valid_data, valid_labels), 
-        (test_data, test_labels))
+    return (
+        (train_data, train_labels), (valid_data, valid_labels), (test_data, test_labels),
+        means, stds)
 
 
 def preparing_data(sat_images, label_images, rotate_image, nbr_rot, img_patch_size, img_border):

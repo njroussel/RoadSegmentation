@@ -6,7 +6,9 @@ New version of the code for clear understanding of the method with better modula
 
 import tensorflow as tf
 import numpy as np
+from PIL import Image
 import sys
+import os
 import progressbar
 
 import prediction_helpers as pred_help
@@ -51,11 +53,13 @@ def main(argv=None):
 
     # Getting the data on ehich we are going to train
     data, labels = preparing_data(
-        sat_images, label_images, global_vars.ROTATE_IMAGES, global_vars.ROTATED_IMG, global_vars.IMG_PATCH_SIZE, global_vars.IMG_BORDER)
+        sat_images, label_images, global_vars.ROTATE_IMAGES, global_vars.ROTATED_IMG,
+        global_vars.IMG_PATCH_SIZE, global_vars.IMG_BORDER)
 
     # Seperating our data in three distinct sets (taining, validation, testing)
-    (train_set, valid_set, test_set) = seperate_set(data, labels, global_vars.VALIDATION_TRAIN_PERC, 
-        global_vars.VALIDATION_VAL_PERC)
+    # and normalization
+    (train_set, valid_set, test_set, means, stds) = seperate_set(data, labels, 
+        global_vars.VALIDATION_TRAIN_PERC, global_vars.VALIDATION_VAL_PERC)
 
     # Balancing data
     train_set = img_help.balance_data(train_set[0], train_set[1])
@@ -211,7 +215,7 @@ def main(argv=None):
 
                         print('%.2f' % (float(step) * global_vars.BATCH_SIZE / train_size) + '% of Epoch ' + str(epoch + 1))
                         print("loss :",l)
-                        print("training set accuracy :", train_acc)
+                        print("training batch set accuracy :", train_acc)
                         print("validation set accuracy :", valid_acc)
 
                         # TODO: do a logging function
@@ -245,28 +249,62 @@ def main(argv=None):
 
         print("Accuracy rating is :", accuracy)
 
-        f1_thresh_from = 0.25
-        f1_thresh_to = 0.75
-        f1_thresh_step = 0.05
+        # Computing F1 score from predictions with different thresholds
 
-        threshold = tf.Variable(f1_thresh_from, name="threshold")
+        threshold_tf = tf.Variable(f1_thresh_from, name="threshold")
 
-        predictions_0 = tf.cast(tf.transpose(predictions)[0] > threshold, tf.int64)
-        correct_predictions_thresh = tf.equal(predictions_0, tf.argmax(eval_label_node,1))
-        
-        init_op = tf.global_variables_initializer()
+        predictions_1 = tf.cast(tf.transpose(predictions)[1] > threshold_tf, tf.int64)
+        correct_predictions_thresh = tf.equal(predictions_1, tf.argmax(eval_label_node,1))
 
-        for thresh in np.linspace(0.25,0.75, 10):
-            s.run(init_op)
-            threshold = thresh
+        f1_scores = []
+        threshs = np.linspace(0.25,0.75, 10)
 
-            print("Threshohld :",tresh)
+        for thresh in threshs:
+            s.run(init)
+            threshold_tf = thresh
 
-            f1_score = compute_f1_tf(s, predictions_0, correct_predictions_thresh, valid_set, 
+            print("Threshold :",thresh)
+
+            f1_score = compute_f1_tf(s, predictions_1, correct_predictions_thresh, valid_set, 
                 global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+
+            f1_scores.append(f1_score)
 
             print("F1 score :",f1_score)
 
+        # Output test with best Threshold
+
+        thresh = threshs[np.argmax(f1_score)]
+
+        # Test set f1_score
+
+        s.run(init)
+        threshold_tf = thresh
+
+        print("Threshold :",thresh)
+
+        f1_score = compute_f1_tf(s, predictions_1, correct_predictions_thresh, test_set, 
+            global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+
+        print("Best F1 score for test set :",f1_score)
+
+        if global_vars.TEST_PREDICTIONS:
+            ## Run on test set.
+            print('Running on test set.')
+            FILE_REGEX = 'test_%d'
+            TEST_SIZE = 50
+            test_data_filename = './test_set_images/'
+            test_dir = 'test_predictions/'
+            if not os.path.isdir(test_dir):
+                os.mkdir(test_dir)
+            for i in range(1, TEST_SIZE + 1):
+                print('test prediction {}'.format(i))
+                pimg = pred_help.get_prediction_image(test_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                            global_vars, thresh)
+                Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
+                oimg = pred_help.get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                                   global_vars, thresh)
+                oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
 if __name__ == '__main__':
     tf.app.run()

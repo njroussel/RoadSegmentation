@@ -28,9 +28,7 @@ def get_image_summary_3d(img):
     return V
 
 
-def get_prediction_image(filename, image_idx, s, model, file_regex, means, stds, img_patch_size,
-                            img_border, img_total_size, num_channels, eval_batch_size, 
-                            num_labels):
+def get_prediction_image(filename, image_idx, s, model, file_regex, means, stds, global_vars, thresh):
 
     imageid = file_regex % image_idx
     image_filename = filename + imageid + ".png"
@@ -39,8 +37,7 @@ def get_prediction_image(filename, image_idx, s, model, file_regex, means, stds,
     if len(tmp.shape) == 2:
         img = img.reshape(img.shape[0], img.shape[1], 1)
 
-    img_prediction = get_prediction(img, s, model, means, stds, img_patch_size, img_border, 
-        img_total_size, num_channels, eval_batch_size, num_labels)
+    img_prediction = get_prediction(img, s, model, means, stds, global_vars, thresh)
 
     return img_float_to_uint8(img_prediction)
 
@@ -69,9 +66,10 @@ def prediction_in_batches(data, sess, eval_prediction, data_node, eval_batch_siz
 
 
 # Get prediction for given input image
-def get_prediction(img, s, model, means, stds, img_patch_size, img_border, img_total_size, num_channels,
-                   eval_batch_size, num_labels):
-    data = np.asarray(img_crop(img, img_patch_size, img_patch_size, border=img_border))
+def get_prediction(img, s, model, means, stds, global_vars, thresh):
+    data = np.asarray(
+        img_crop(img, global_vars.IMG_PATCH_SIZE, global_vars.IMG_PATCH_SIZE, border=global_vars.IMG_BORDER))
+
     if len(data.shape) < 4:
         data = data.reshape(data.shape[0], data.shape[1], data.shape[2], 1)
 
@@ -79,19 +77,26 @@ def get_prediction(img, s, model, means, stds, img_patch_size, img_border, img_t
 
     data_node = tf.placeholder(
         tf.float32,
-        shape=(eval_batch_size, img_total_size, img_total_size, num_channels))
+        shape=(
+            global_vars.EVAL_BATCH_SIZE, 
+            global_vars.IMG_TOTAL_SIZE, 
+            global_vars.IMG_TOTAL_SIZE, 
+            global_vars.NUM_CHANNELS))
 
 
     output = tf.nn.softmax(model(data_node))
-    output_prediction = prediction_in_batches(data, s, output, data_node, eval_batch_size, num_labels)
+    output_prediction = prediction_in_batches(
+        data, s, output, data_node, global_vars.EVAL_BATCH_SIZE, global_vars.NUM_LABELS)
 
-    img_prediction = label_to_img(img.shape[0], img.shape[1], img_patch_size, img_patch_size, output_prediction)
+    img_prediction = label_to_img(
+        img.shape[0], img.shape[1], global_vars.IMG_PATCH_SIZE, global_vars.IMG_PATCH_SIZE, 
+        output_prediction, thresh)
+    
     return img_prediction
 
 
 # Get prediction overlaid on the original image for given input file
-def get_prediction_with_overlay(filename, image_idx, s, model, file_regex, means, stds, img_patch_size, img_border,
-                                img_total_size, num_channels, eval_batch_size, num_labels):
+def get_prediction_with_overlay(filename, image_idx, s, model, file_regex, means, stds, global_vars, thresh):
     imageid = file_regex % image_idx
     image_filename = filename + imageid + ".png"
     img = mpimg.imread(image_filename)
@@ -99,8 +104,7 @@ def get_prediction_with_overlay(filename, image_idx, s, model, file_regex, means
     if len(tmp.shape) == 3:
         img = img[:, :, :3]
 
-    img_prediction = get_prediction(img, s, model, means, stds, img_patch_size, img_border, img_total_size,
-                                    num_channels, eval_batch_size, num_labels)
+    img_prediction = get_prediction(img, s, model, means, stds, global_vars, thresh)
 
     oimg = make_img_overlay(img, img_prediction)
 
