@@ -225,6 +225,7 @@ def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size
 
     print("TP",TP)
     print("FP",FP)
+    print("TN",TN)
     print("FN",FN)
 
     precision = TP / (FP + TP)
