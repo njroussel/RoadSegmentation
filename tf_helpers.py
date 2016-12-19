@@ -51,7 +51,7 @@ def preparing_data(sat_images, label_images, rotate_image, nbr_rot, img_patch_si
         sat_images = np.append(sat_images, imgs, axis=0)
         label_images = np.append(label_images, labels, axis=0)
 
-    print("we have a total of", len(sat_images), "images for training.")
+    print("\nWe have a total of", len(sat_images), "images for training.")
 
     # Extrcting patches from images
     data = img_help.extract_data(
@@ -196,15 +196,11 @@ def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size
     
     TP = 0
     FP = 0
-    TN = 0
     FN = 0
 
     set_len = len(data_set[0])
     batch_nbr = int(np.ceil(set_len / eval_batch_size))
     batch_idxs = np.array_split(range(set_len), batch_nbr)
-
-    print("set length :", set_len)
-    print("nbr of batches :", batch_nbr)
 
     b_update = 0
     score_bar = progressbar.ProgressBar(max_value=len(batch_idxs))
@@ -214,23 +210,14 @@ def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size
         feed_dict = {eval_data_node: data_set[0][batch_idx],
             eval_label_node: data_set[1][batch_idx]}
 
-        truePos_res, falsePos_res, trueNeg_res, falseNeg_res = s.run([truePos, falsePos, trueNeg, falseNeg], feed_dict=feed_dict)
+        truePos_res, falsePos_res, falseNeg_res = s.run([truePos, falsePos, falseNeg], feed_dict=feed_dict)
 
         TP += truePos_res
         FP += falsePos_res
-        TN += trueNeg_res
         FN += falseNeg_res
 
         b_update += 1
         score_bar.update(b_update)
-    
-    score_bar.finish()
-
-
-    print("TP",TP)
-    print("FP",FP)
-    print("TN",TN)
-    print("FN",FN)
 
     if TP == 0:
         return 0
@@ -243,9 +230,6 @@ def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size
 
     precision = TP / (FP + TP)
     recall = TP / (FN + TP)
-
-    print("precision",precision)
-    print("recall",recall)
 
     score_bar.finish()
     return 2 * (precision * recall) / (precision + recall)

@@ -48,11 +48,13 @@ def main(argv=None):
     FILE_REGEX = "satImage_%.3d"
     
     # Getting training images
+    print("\nLoading images :")
+    print("******************************************************************************")
     sat_images, label_images = img_help.read_images(
         train_data_filename, train_labels_filename, 
         global_vars.TRAINING_SIZE, FILE_REGEX)
 
-    # Getting the data on ehich we are going to train
+    # Getting the data on which we are going to train
     data, labels = preparing_data(
         sat_images, label_images, global_vars.ROTATE_IMAGES, global_vars.ROTATED_IMG,
         global_vars.IMG_PATCH_SIZE, global_vars.IMG_BORDER)
@@ -65,8 +67,11 @@ def main(argv=None):
     # Balancing data
     train_set = img_help.balance_data(train_set[0], train_set[1])
 
-    print("We will train on", len(train_set[0]), "patches of size", 
+    print("******************************************************************************")
+    print("\nWe will train on", len(train_set[0]), "patches of size", 
         str(global_vars.IMG_TOTAL_SIZE)+ "x" + str(global_vars.IMG_TOTAL_SIZE))
+
+    print("\nInitializing tensorflow graphs for training and validating")
 
     num_epochs = global_vars.NUM_EPOCHS
 
@@ -157,7 +162,7 @@ def main(argv=None):
     eval_predictions_graph = tf.nn.softmax(model(eval_data_node))
     # Compute predictions for validation and test
     eval_correct_predictions_graph = tf.equal(tf.argmax(eval_predictions_graph,1), tf.argmax(eval_label_node,1))
-    # Accuracy for test as a sum, as we will have to do a mean by patch
+    # Accuracy computation
     eval_accuracy_graph = tf.reduce_mean(tf.cast(eval_correct_predictions_graph, tf.float32))
 
     # Will be used later when we need to compute the f1 score
@@ -185,19 +190,25 @@ def main(argv=None):
     else:
         # run initialisation of variables
         s.run(init)
-        print('Initialized!')
-
-        # Loop through training steps.
-        print('Total number of iterations : ' + str(int(num_epochs * len(train_set[0]) / global_vars.BATCH_SIZE)))
+        print('\nInitialized!')
 
         train_size = len(train_set[0])
-        epoch_bar = progressbar.ProgressBar(max_value=num_epochs)
+
+        # Loop through training steps.
+        print('\nTotal number of epochs for training :', num_epochs)
+        print('Total number of steps for epoch :', int(train_size / global_vars.BATCH_SIZE))
+        print('Total number of steps :', num_epochs * int(train_size / global_vars.BATCH_SIZE))
+        print("\n")
+        print("******************************************************************************")
+        print("                                    Training")
+        print("******************************************************************************")
 
         try:
             batch_size = global_vars.BATCH_SIZE
             for epoch in range(num_epochs):
-                print("training for epoch", epoch)
-                epoch_bar.update(epoch)
+                print("\n******************************************************************************")
+                print("training for epoch :", epoch+1, "out of", num_epochs, "epochs")
+
                 perm_idx = np.random.permutation(train_size)
                 batch_bar = progressbar.ProgressBar(max_value=int(train_size / global_vars.BATCH_SIZE))
                 for step in range(int(train_size / global_vars.BATCH_SIZE)):
@@ -214,17 +225,24 @@ def main(argv=None):
                                  train_label_node: batch_labels}
                     
                     if step % global_vars.RECORDING_STEP == 0:
-                        _, train_acc, l = s.run(
-                            [optimizer, accuracy_train_graph, loss], feed_dict=feed_dict)
+                        _, l = s.run(
+                            [optimizer, loss], feed_dict=feed_dict)
                         
-                        print("computing intermediate accuracy")
+                        print("\ncomputing intermediate accuracy and loss at step", step)
+                        print("computing train accuracy")
+                        acc = batch_sum(s, eval_accuracy_graph, train_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+                        train_acc = acc / int(np.ceil(len(train_set[0]) / global_vars.EVAL_BATCH_SIZE))
+
+                        print("computing validation accuracy")
                         acc = batch_sum(s, eval_accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
                         valid_acc = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
 
-                        print('%.2f' % (float(step) * global_vars.BATCH_SIZE / train_size) + '% of Epoch ' + str(epoch + 1))
+                        print('\n%.2f' % (float(step) * global_vars.BATCH_SIZE / train_size) + '% of Epoch ' + str(epoch + 1))
                         print("loss :",l)
-                        print("training batch set accuracy :", train_acc)
+                        print("training set accuracy :", train_acc)
                         print("validation set accuracy :", valid_acc)
+
+                        print("\nContinuing training steps")
 
                         # TODO: do a logging function
                         loss_per_recording_step.append(l)
@@ -238,28 +256,31 @@ def main(argv=None):
                             feed_dict=feed_dict)
 
                 batch_bar.finish()
-                    
+
                 # What do here ? nothing normally as done at beginning of each epoch
         except KeyboardInterrupt:
             print("Interrupted at epoch ", epoch + 1)
             pass
+        
+        print("\n******************************************************************************")
+        print("Finished training")
 
-        epoch_bar.finish()
-
-        print("Scoring on validation set")
+        print("\nScoring on validation set")
 
         acc = batch_sum(s, eval_accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
         accuracy = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
 
         print("Accuracy rating is :", accuracy)
 
-        print("Scoring on testing set")
+        print("\nScoring on testing set")
 
         acc = batch_sum(s, eval_accuracy_graph, test_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
         accuracy = acc / int(np.ceil(len(test_set[0]) / global_vars.EVAL_BATCH_SIZE))
 
         print("Accuracy rating is :", accuracy)
 
+        print("\n******************************************************************************")
+        print("Finding best f1_score with different thresholds")
         # Computing F1 score from predictions with different thresholds
         f1_scores = []
         threshs = np.linspace(0.3, 0.6, 10)
@@ -267,23 +288,14 @@ def main(argv=None):
         for thresh in threshs:
             s.run(threshold_tf.assign(thresh))
 
-            feed_dict = {eval_data_node: valid_set[0][:64],
-                eval_label_node: valid_set[1][:64]}
-
-            print("this is the predictions probabilities")
-            print(s.run(pos_predictions_thresh_graph, feed_dict=feed_dict))
-            print("this is the true predictions")
-            print(s.run(tf.argmax(eval_label_node,1), feed_dict=feed_dict))
-
-
-            print("Threshold :",thresh)
+            print("\nComputing F1-score with threshold :",thresh)
 
             f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, valid_set, 
                 global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
             f1_scores.append(f1_score)
 
-            print("F1 score :",f1_score)
+            print("F1-score :",f1_score)
 
         # Output test with best Threshold
         thresh = threshs[np.argmax(f1_scores)]
@@ -292,16 +304,17 @@ def main(argv=None):
 
         s.run(threshold_tf.assign(thresh))
 
-        print("Threshold :", thresh)
+        print("\nTest set F1-score with best threshold :", thresh)
 
         f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, test_set, 
             global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
-        print("Best F1 score for test set :", f1_score)
+        print("F1-score:", f1_score)
 
         if global_vars.TEST_PREDICTIONS:
             ## Run on test set.
-            print('Running on test set.')
+            print("\n******************************************************************************")
+            print('Running on test set\n')
             FILE_REGEX = 'test_%d'
             TEST_SIZE = 50
             test_data_filename = './test_set_images/'
