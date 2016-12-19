@@ -163,9 +163,12 @@ def main(argv=None):
     # Will be used later when we need to compute the f1 score
     threshold_tf = tf.Variable(0, name="threshold_tf", dtype=tf.float32)
 
-    # 0 corresponds to a road, which we will consider as positive.
+    # Index [0] corresponds to a road, which we will consider as positive therefore 1.
     pos_predictions_thresh_graph = tf.cast(tf.transpose(eval_predictions_graph)[0] > threshold_tf, tf.int64)
-    correct_predictions_thresh = tf.equal(pos_predictions_thresh_graph, tf.argmax(eval_label_node,1))
+    # Here for the true labels we have the oposite -> 1 is background, road is 0 so we use argmin to reverse that
+    true_predictions_graph = tf.argmin(eval_label_node,1)
+    # Here we have a boolean array with true values where instances of the prediction correspond to the labels.
+    correct_predictions_thresh = tf.equal(pos_predictions_thresh_graph, true_predictions_graph)
 
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
@@ -268,7 +271,10 @@ def main(argv=None):
                 eval_label_node: valid_set[1][:64]}
 
             print("this is the predictions probabilities")
-            print(s.run(tf.transpose(eval_predictions_graph)[0], feed_dict=feed_dict))
+            print(s.run(pos_predictions_thresh_graph, feed_dict=feed_dict))
+            print("this is the true predictions")
+            print(s.run(tf.argmax(eval_label_node,1), feed_dict=feed_dict))
+
 
             print("Threshold :",thresh)
 
@@ -283,7 +289,7 @@ def main(argv=None):
         thresh = threshs[np.argmax(f1_scores)]
 
         # Test set f1_score
-        
+
         s.run(threshold_tf.assign(thresh))
 
         print("Threshold :", thresh)
