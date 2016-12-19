@@ -192,7 +192,7 @@ def init_cov_matrix_tf(predictions, correct_predictions):
 def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size, eval_data_node, eval_label_node):
     # Evaluating accuracy for EVAL_BATCH_SIZE parts of the validation set
     
-    truePos, falsePos, true_Neg, falseNeg = init_cov_matrix_tf(predictions, correct_predictions)
+    truePos, falsePos, trueNeg, falseNeg = init_cov_matrix_tf(predictions, correct_predictions)
     
     TP = 0
     FP = 0
