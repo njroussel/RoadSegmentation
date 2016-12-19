@@ -159,7 +159,7 @@ def main(argv=None):
     # Compute predictions for validation and test
     correct_predictions = tf.equal(tf.argmax(predictions,1), tf.argmax(eval_label_node,1))
     # Accuracy for test as a sum, as we will have to do a mean by patch
-    accuracy_sum = tf.reduce_sum(tf.cast(correct_predictions, tf.float32))
+    accuracy_eval = tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
 
     # Add ops to save and restore all the variables.
     saver = tf.train.Saver()
@@ -209,9 +209,9 @@ def main(argv=None):
                         _, train_acc, l = s.run(
                             [optimizer, accuracy_train, loss], feed_dict=feed_dict)
 
-                        acc = batch_sum(s, accuracy_sum, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+                        acc = batch_sum(s, accuracy_eval, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
-                        valid_acc = acc / (int(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE) * global_vars.EVAL_BATCH_SIZE)
+                        valid_acc = acc / int(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE)
 
                         print('%.2f' % (float(step) * global_vars.BATCH_SIZE / train_size) + '% of Epoch ' + str(epoch + 1))
                         print("loss :",l)
@@ -261,7 +261,7 @@ def main(argv=None):
         init_v = tf.global_variables_initializer()
 
         f1_scores = []
-        threshs = np.linspace(0.25,0.75, 10)
+        threshs = np.linspace(0.4,0.6, 20)
 
         for thresh in threshs:
             s.run(init_v)
