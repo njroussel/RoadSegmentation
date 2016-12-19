@@ -83,12 +83,12 @@ def main(argv=None):
 
     eval_data_node = tf.placeholder(
         tf.float32,
-        shape=(global_vars.EVAL_BATCH_SIZE, global_vars.IMG_TOTAL_SIZE, 
+        shape=(None, global_vars.IMG_TOTAL_SIZE, 
             global_vars.IMG_TOTAL_SIZE, global_vars.NUM_CHANNELS))
 
     eval_label_node = tf.placeholder(
         tf.float32,
-        shape=(global_vars.EVAL_BATCH_SIZE, global_vars.NUM_LABELS))
+        shape=(None, global_vars.NUM_LABELS))
 
     # Define the parameters of the convolutional layers
     conv_params, last_depth = params_conv_layers(
@@ -115,7 +115,7 @@ def main(argv=None):
 
         reshape = tf.reshape(
             conv_end,
-            [conv_end_shape[0], conv_end_shape[1] * conv_end_shape[2] * conv_end_shape[3]])
+            [-1, conv_end_shape[1] * conv_end_shape[2] * conv_end_shape[3]])
 
         print(reshape.get_shape())
 
@@ -183,7 +183,7 @@ def main(argv=None):
         print('Total number of iterations : ' + str(int(num_epochs * len(train_set[0]) / global_vars.BATCH_SIZE)))
 
         train_size = len(train_set[0])
-        epoch_bar = progressbar.ProgressBar(max_value=num_epochs).start()
+        epoch_bar = progressbar.ProgressBar(max_value=num_epochs)
 
         try:
             batch_size = global_vars.BATCH_SIZE
@@ -191,7 +191,6 @@ def main(argv=None):
                 print("training for epoch", epoch)
                 epoch_bar.update(epoch)
                 perm_idx = np.random.permutation(train_size)
-
                 batch_bar = progressbar.ProgressBar(max_value=int(train_size / global_vars.BATCH_SIZE))
                 for step in range(int(train_size / global_vars.BATCH_SIZE)):
                     batch_idx = perm_idx[step * batch_size : (step+1) * batch_size]
@@ -209,9 +208,10 @@ def main(argv=None):
                     if step % global_vars.RECORDING_STEP == 0:
                         _, train_acc, l = s.run(
                             [optimizer, accuracy_train, loss], feed_dict=feed_dict)
-
+                        
+                        print("computing intermediate accuracy")
                         acc = batch_sum(s, accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
-                        valid_acc = acc / int(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE)
+                        valid_acc = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
 
                         print('%.2f' % (float(step) * global_vars.BATCH_SIZE / train_size) + '% of Epoch ' + str(epoch + 1))
                         print("loss :",l)
@@ -224,7 +224,8 @@ def main(argv=None):
                         sys.stdout.flush()
                     else:
                         # Run the graph and fetch some of the nodes.
-                        _, l, predictions = s.run(
+                        batch_bar.update(step)
+                        _, l, predictions_train = s.run(
                             [optimizer, loss, train_prediction],
                             feed_dict=feed_dict)
 
@@ -240,36 +241,40 @@ def main(argv=None):
         print("Scoring on validation set")
 
         acc = batch_sum(s, accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
-        accuracy = acc / int(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE)
+        accuracy = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
 
         print("Accuracy rating is :", accuracy)
 
         print("Scoring on testing set")
 
         acc = batch_sum(s, accuracy_graph, test_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
-        accuracy = acc / int(len(test_set[0]) / global_vars.EVAL_BATCH_SIZE)
+        accuracy = acc / int(np.ceil(len(test_set[0]) / global_vars.EVAL_BATCH_SIZE))
 
         print("Accuracy rating is :", accuracy)
 
         # Computing F1 score from predictions with different thresholds
 
-        threshold_tf = tf.Variable(0.5, name="threshold_tf", dtype=tf.float32)
+        threshold_tf = tf.Variable(0, name="threshold_tf", dtype=tf.float32)
 
-        predictions_1 = tf.cast(tf.transpose(predictions)[1] > threshold_tf, tf.int64)
-        correct_predictions_thresh = tf.equal(predictions_1, tf.argmax(eval_label_node,1))
+        # 0 corresponds to a road, which we will consider as positive.
+        predictions_0 = tf.cast(tf.transpose(predictions)[0] > threshold_tf, tf.int64)
+        correct_predictions_thresh = tf.equal(predictions_0, tf.argmax(eval_label_node,1))
 
-        init_v = tf.global_variables_initializer()
+
+        print(predictions.get_shape())
 
         f1_scores = []
         threshs = np.linspace(0.3, 0.6, 10)
 
         for thresh in threshs:
+            init_v = tf.global_variables_initializer()
+
             s.run(init_v)
             s.run(threshold_tf.assign(thresh))
 
             print("Threshold :",thresh)
 
-            f1_score = compute_f1_tf(s, predictions_1, correct_predictions_thresh, valid_set, 
+            f1_score = compute_f1_tf(s, predictions_0, correct_predictions_thresh, valid_set, 
                 global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
             f1_scores.append(f1_score)
@@ -286,7 +291,7 @@ def main(argv=None):
 
         print("Threshold :", thresh)
 
-        f1_score = compute_f1_tf(s, predictions_1, correct_predictions_thresh, test_set, 
+        f1_score = compute_f1_tf(s, predictions_0, correct_predictions_thresh, test_set, 
             global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
         print("Best F1 score for test set :", f1_score)
