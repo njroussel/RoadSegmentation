@@ -223,8 +223,15 @@ def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size
         FP += falsePos_res
         FN += falseNeg_res
 
+    print(TP)
+    print(FP)
+    print(FN)
+
     precision = TP / (FP + TP)
     recall = TP / (FN + TP)
+
+    print(precision)
+    print(recall)
 
     score_bar.finish()
     return 2 * (precision * recall) / (precision + recall)
