@@ -192,11 +192,12 @@ def init_cov_matrix_tf(predictions, correct_predictions):
 def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size, eval_data_node, eval_label_node):
     # Evaluating accuracy for EVAL_BATCH_SIZE parts of the validation set
     
-    truePos, falsePos, _, falseNeg = init_cov_matrix_tf(predictions, correct_predictions)
+    truePos, falsePos, true_Neg, falseNeg = init_cov_matrix_tf(predictions, correct_predictions)
     
     TP = 0
     FP = 0
     FN = 0
+    TN = 0
 
     set_len = len(data_set[0])
     batch_nbr = int(set_len / eval_batch_size) + 1
@@ -204,8 +205,6 @@ def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size
     
     b_update = 0
     score_bar = progressbar.ProgressBar(max_value=len(batch_idxs)).start()
-
-    acc = 0
     
     for batch_idx in batch_idxs:
         score_bar.update(b_update)
@@ -217,11 +216,12 @@ def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size
         feed_dict = {eval_data_node: data_set[0][batch_idx],
             eval_label_node: data_set[1][batch_idx]}
 
-        truePos_res, falsePos_res, falseNeg_res = s.run([truePos, falsePos, falseNeg], feed_dict=feed_dict)
+        truePos_res, falsePos_res, trueNeg_res, falseNeg_res = s.run([truePos, falsePos, trueNeg, falseNeg], feed_dict=feed_dict)
 
         TP += truePos_res
         FP += falsePos_res
         FN += falseNeg_res
+        TN += trueNeg_res
 
     print("TP",TP)
     print("FP",FP)
