@@ -32,7 +32,7 @@ FC_DEPTH = [512]
 IMG_PATCH_SIZE = 16
 
 # Border for enhanced context.
-IMG_BORDER = 16  # Will be set after archi is found
+IMG_BORDER = 0  # Will be set after archi is found
 
 IMG_TOTAL_SIZE = IMG_PATCH_SIZE + 2 * IMG_BORDER
 
