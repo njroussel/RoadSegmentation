@@ -7,6 +7,7 @@ Credits: Aurelien Lucchi, ETH Zürich
 
 import sys
 import time
+import global_vars_pp
 
 from prediction_helpers import *
 
@@ -312,10 +313,8 @@ def main(argv=None):  # pylint: disable=unused-argument
             for i in range(1, PP_TRAINING_SIZE + 1):
                 print('prediction {}'.format(i))
                 FILE_REGEX = "satImage_%.3d"
-                pimg = get_prediction_image(train_data_filename, i, s, model, FILE_REGEX, means, stdspytho,
-                                            PP_IMG_PATCH_SIZE, PP_IMG_BORDER,
-                                            PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
-                                            PP_NUM_LABELS)
+                pimg = get_prediction_image(train_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                            global_vars_pp, 0.5)
                 pimg = quantize_binary_images([pimg], PP_IMG_PATCH_SIZE, IMG_PATCH_SIZE)[0]
                 pimg = img_float_to_uint8(pimg)
                 Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
@@ -332,9 +331,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             for i in range(1, TEST_SIZE + 1):
                 print('test prediction {}'.format(i))
                 pimg = get_prediction_image(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                            PP_IMG_PATCH_SIZE, PP_IMG_BORDER,
-                                            PP_IMG_TOTAL_SIZE, PP_NUM_CHANNELS, PP_EVAL_BATCH_SIZE,
-                                            PP_NUM_LABELS)
+                                            global_vars_pp, 0.5)
                 pimg = quantize_binary_images([pimg], PP_IMG_PATCH_SIZE, IMG_PATCH_SIZE)[0]
                 pimg = img_float_to_uint8(pimg)
                 Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
