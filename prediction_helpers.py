@@ -44,7 +44,7 @@ def get_prediction_images(file_regex, input_dir, output_dir, size, s, model, mea
             oimg = get_prediction_with_overlay(img_filename, s, model, means, stds, global_vars, thresh)
             oimg.save(output_dir + "overlay_" + str(i) + ".png")
 
-        print('Completed image{}'.format(i))
+        print('Completed image {}'.format(i))
 
 
 def get_prediction_image(img_filename, s, model, means, stds, global_vars, thresh):

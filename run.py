@@ -19,14 +19,14 @@ tf.app.flags.DEFINE_string(
 
 FLAGS = tf.app.flags.FLAGS
 
+# Create save directory if needed
+if not os.path.exists(FLAGS.train_dir):
+    os.makedirs(FLAGS.train_dir)
+
 
 # Initialisation of some flags for tensor flow
 # (In this case we declare the directory to store nets as we go))
 def main(argv=None):
-    # Create save directory if needed
-    if not os.path.exists(FLAGS.train_dir):
-        os.makedirs(FLAGS.train_dir)
-
     # setup seeds
     np.random.seed(SEED)
     tf.set_random_seed(SEED)
