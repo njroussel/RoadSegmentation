@@ -5,24 +5,26 @@ TRAINING_SIZE = 100
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 64  # 64
 BATCH_SIZE = 64
-NUM_EPOCHS = 4 # Will later be determined by validation.
-ROTATE_IMAGES = True
+NUM_EPOCHS = 100 # Will later be determined by validation.
+ROTATE_IMAGES = False
 ROTATED_IMG = 50
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
-POST_PROCESS = True
+POST_PROCESS = False
 TEST_PREDICTIONS = True
 RECORDING_STEP = 1000
 LEARNING_RATE = 0.001
 
+KEEP_DROPOUT = 0.5
+
 # Convolution network architecture
-CONV_ARCH = [2, 2, 4] # The best architecture so far on validation.
+CONV_ARCH = [1, 1] # The best architecture so far on validation.
 # [2, 4, 4, 6] Best on test set.
 # We will keep both, but mostly use [2, 2, 4] because of our limited
 # computation power.
 CONV_DEPTH = [32, 64, 128, 256]
 
-FC_ARCH = 2
-FC_DEPTH = [1024, 1024]
+FC_ARCH = 1
+FC_DEPTH = [512]
 
 # Set image patch size in pixels
 # IMG_PATCH_SIZE should be a multiple of 4

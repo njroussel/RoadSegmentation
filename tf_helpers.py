@@ -88,13 +88,13 @@ def batch_sum(s, func_sum, data_set, eval_batch_size, eval_data_node, eval_label
     return acc
 
 
-def init_fc_layers(fc_arch, fc_params, prev_layer, dropout, seed=None):
+def init_fc_layers(fc_arch, fc_params, prev_layer, dropout, keep_dropout, seed=None):
     # convolution layers
 
     for i in range(fc_arch):
         prev_layer = tf.nn.relu(tf.matmul(prev_layer, fc_params[i][0]) + fc_params[i][1])
         if dropout:
-            prev_layer = tf.nn.dropout(prev_layer, 0.8, seed=seed)
+            prev_layer = tf.nn.dropout(prev_layer, keep_dropout, seed=seed)
 
     fc_end = tf.matmul(prev_layer, fc_params[-1][0]) + fc_params[-1][1]
 

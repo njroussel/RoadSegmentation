@@ -81,7 +81,7 @@ def learn(sat_images, label_images, configuration, SEED, FLAGS, save_model_filep
             conv_end,
             [-1, conv_end_shape[1] * conv_end_shape[2] * conv_end_shape[3]])
 
-        out = init_fc_layers(configuration.FC_ARCH, fc_params, reshape, train, SEED)
+        out = init_fc_layers(configuration.FC_ARCH, fc_params, reshape, train, configuration.KEEP_DROPOUT, SEED)
 
         return out
 
