@@ -319,8 +319,8 @@ def main(argv=None):
             logger.append_log("F1-score_threshs_validation", threshs)
             idx_max_thresh = np.argmax(f1_scores)
             diff_thresh = f1_scores[idx_max_thresh] - f1_scores[0]
-            thresh_start = threshs[min(idx_max_thresh-1, 0)]
-            thresh_end = threshs[max(idx_max_thresh+1, thresh_steps-1)]
+            thresh_start = threshs[max(idx_max_thresh-1, 0)]
+            thresh_end = threshs[min(idx_max_thresh+1, thresh_steps-1)]
 
             print("\nDifference :", diff_thresh)
             
