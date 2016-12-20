@@ -5,11 +5,13 @@ New version of the code for clear understanding of the method with better modula
 """
 
 import os
+import sys
 
 from PIL import Image
 
 import global_vars
 import logger
+import prediction_helpers as pred_help
 from tf_helpers import *
 
 # Initialisation of some flags for tensor flow

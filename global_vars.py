@@ -72,7 +72,7 @@ PP_CONV_ARCH = [1]
 PP_IMG_PATCH_SIZE = 2  # MUST BE EVEN
 
 # Border for enhanced context.
-PP_IMG_BORDER = 10  # MUST BE EVEN (could eventually be even ....)
+PP_IMG_BORDER = 4  # MUST BE EVEN (could eventually be even ....)
 
 PP_IMG_TOTAL_SIZE = PP_IMG_PATCH_SIZE + 2 * PP_IMG_BORDER
 
