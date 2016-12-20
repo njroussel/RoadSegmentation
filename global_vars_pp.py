@@ -1,15 +1,14 @@
 NUM_CHANNELS = 1  # Binary images
 NUM_LABELS = 2
-TRAINING_SIZE = 5
+TRAINING_SIZE = 100
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 128  # 64
-BATCH_SIZE = 16
-NUM_EPOCHS = 30  # Will later be determined by validation.
-ROTATED_IMG = 40
-ROTATE_IMAGES = False
+BATCH_SIZE =  64
+NUM_EPOCHS = 3 # Will later be determined by validation.
+ROTATED_IMG = 50
+ROTATE_IMAGES = True
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
 TEST_PREDICTIONS = True
-ENABLE_RECORDING = False
 RECORDING_STEP = 1000
 LEARNING_RATE = 0.001
 
@@ -28,7 +27,7 @@ FC_DEPTH = [1024, 1024]
 IMG_PATCH_SIZE = 2  # MUST BE EVEN
 
 # Border for enhanced context.
-IMG_BORDER = 4  # MUST BE EVEN (could eventually be even ....)
+IMG_BORDER = 15  # MUST BE EVEN (could eventually be even ....)
 
 IMG_TOTAL_SIZE = IMG_PATCH_SIZE + 2 * IMG_BORDER
 

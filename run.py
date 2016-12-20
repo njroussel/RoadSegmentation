@@ -119,10 +119,10 @@ def main(argv=None):
             train_labels_filename, global_vars_pp.TRAINING_SIZE, file_regex)
 
         prediction_images = img_help.quantize_binary_images(
-            prediction_images, global_vars_pp.IMG_PATCH_SIZE, global_vars_pp.IMG_PATCH_SIZE)
+            prediction_images, global_vars.IMG_PATCH_SIZE, global_vars_pp.IMG_PATCH_SIZE)
 
         label_images = img_help.quantize_binary_images(
-            label_images, global_vars_pp.IMG_PATCH_SIZE, global_vars_pp.IMG_PATCH_SIZE)
+            label_images, global_vars.IMG_PATCH_SIZE, global_vars_pp.IMG_PATCH_SIZE)
 
         s, model, means, stds, max_thresh = learn.learn(
             prediction_images, label_images, global_vars_pp, SEED, FLAGS, save_model_file_path)

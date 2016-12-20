@@ -1,12 +1,12 @@
 NUM_CHANNELS = 3  # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2
-TRAINING_SIZE = 5
+TRAINING_SIZE = 100
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 64  # 64
 BATCH_SIZE = 64
-NUM_EPOCHS = 1  # Will later be determined by validation.
-ROTATE_IMAGES = False
+NUM_EPOCHS = 4 # Will later be determined by validation.
+ROTATE_IMAGES = True
 ROTATED_IMG = 50
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
 POST_PROCESS = True
@@ -15,7 +15,7 @@ RECORDING_STEP = 1000
 LEARNING_RATE = 0.001
 
 # Convolution network architecture
-CONV_ARCH = [1, 1]  # [2, 2, 4] # The best architecture so far on validation.
+CONV_ARCH = [2, 2, 4] # The best architecture so far on validation.
 # [2, 4, 4, 6] Best on test set.
 # We will keep both, but mostly use [2, 2, 4] because of our limited
 # computation power.
@@ -30,7 +30,7 @@ FC_DEPTH = [1024, 1024]
 IMG_PATCH_SIZE = 16
 
 # Border for enhanced context.
-IMG_BORDER = 0  # Will be set after archi is found
+IMG_BORDER = 16  # Will be set after archi is found
 
 IMG_TOTAL_SIZE = IMG_PATCH_SIZE + 2 * IMG_BORDER
 
@@ -38,8 +38,8 @@ THETA_THRESH = 0.01
 
 # Validation parameters:
 VALIDATION_TRAIN_PERC = 0.6
-VALIDATION_VAL_PERC = 0.3
-VALIDATION_TEST_PERC = 0.1
+VALIDATION_VAL_PERC = 0.2
+VALIDATION_TEST_PERC = 0.2
 
 # Hyperparameters validation
 COMPUTE_VALIDATION_F1_SCORE_FOR_EACH_EPOCH = True
