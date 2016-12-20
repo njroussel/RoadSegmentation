@@ -259,6 +259,8 @@ def main(argv=None):
                         valid_acc = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
                         logger.append_log("Accuracy_validation", valid_acc)
 
+                        logger.append_log("Loss_taining", l)
+
                         print('\n%.2f' % (float(step) * global_vars.BATCH_SIZE / train_size) + '% of Epoch ' + str(epoch + 1))
                         print("loss :",l)
                         print("training set accuracy :", train_acc)
@@ -267,9 +269,6 @@ def main(argv=None):
                         saver.save(s, FLAGS.train_dir + "/model.ckpt")
 
                         print("\nContinuing training steps")
-
-                        # TODO: do a logging function
-                        loss_per_recording_step.append(l)
 
                         sys.stdout.flush()
                     else:

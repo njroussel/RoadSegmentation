@@ -7,6 +7,7 @@ params_file_name = 'runs.txt'
 logs = {
     "Accuracy_training": [],
     "Accuracy_validation": [],
+    "Loss_taining": [],
     "Accuracy_test": 0,
 
     "F1-score_validation": [],
