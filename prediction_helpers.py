@@ -95,6 +95,18 @@ def get_prediction(img, s, model, means, stds, global_vars, thresh):
     return img_prediction
 
 
+def get_prediction_from_patches(patches, s, model, eval_batch_size, img_total_size, num_channels, num_labels):
+    data = np.asarray(patches)
+
+    data_node = tf.placeholder(
+        tf.float32,
+        shape=(eval_batch_size, img_total_size, img_total_size, num_channels))
+
+    output = tf.nn.softmax(model(data_node))
+    output_prediction = prediction_in_batches(data, s, output, data_node, eval_batch_size, num_labels)
+    return output_prediction
+
+
 # Get prediction overlaid on the original image for given input file
 def get_prediction_with_overlay(filename, image_idx, s, model, file_regex, means, stds, global_vars, thresh):
     imageid = file_regex % image_idx
