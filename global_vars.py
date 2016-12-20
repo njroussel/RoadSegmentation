@@ -1,7 +1,7 @@
 NUM_CHANNELS = 3  # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2
-TRAINING_SIZE = 140
+TRAINING_SIZE = 1
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 64  # 64
 BATCH_SIZE = 64
@@ -34,6 +34,8 @@ IMG_PATCH_SIZE = 16
 IMG_BORDER = 4  # Will be set after archi is found
 
 IMG_TOTAL_SIZE = IMG_PATCH_SIZE + 2 * IMG_BORDER
+
+THETA_THRESH = 0.005
 
 # Validation parameters:
 VALIDATION_TRAIN_PERC = 0.6

@@ -290,30 +290,50 @@ def main(argv=None):
         print("\n******************************************************************************")
         print("Finding best f1_score with different thresholds")
         # Computing F1 score from predictions with different thresholds
-        f1_scores = []
-        threshs = np.linspace(0.3, 0.6, 10)
+        thresh_start = 0.3
+        thresh_end = 0.6
+        steps = 10
+        theta_thresh = global_vars.THETA_THESH
 
-        for thresh in threshs:
-            s.run(threshold_tf.assign(thresh))
 
-            print("\nComputing F1-score with threshold :",thresh)
+        diff_thresh = 1
+        while (diff_thresh > theta_thresh):
+            print("\nTesting for threshold between", thresh_start, "and", thresh_end)
+            threshs = np.linspace(thresh_start, thresh_end, steps)
+            f1_scores = []
 
-            f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, valid_set, 
-                global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+            for thresh in threshs:
+                s.run(threshold_tf.assign(thresh))
 
-            f1_scores.append(f1_score)
-            logger.append_log("F1-score_validation", f1_score)
+                print("\nComputing F1-score with threshold :",thresh)
 
-            print("F1-score :",f1_score)
+                f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, valid_set, 
+                    global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
-        # Output test with best Threshold
-        thresh = threshs[np.argmax(f1_scores)]
+                f1_scores.append(f1_score)
+
+                print("F1-score :",f1_score)
+
+            # Output test with best Threshold
+            logger.append_log("F1-score_validation", f1_scores)
+            logger.append_log("F1-score_threshs_validation", threshs)
+            idx_max_thresh = np.argmax(f1_scores)
+            diff_thresh = f1_scores[idx_max_thresh] - f1_scores[0]
+            thresh_start = threshs[idx_max_thresh-1]
+            thresh_end = threshs[idx_max_thresh+1]
+
+            print("\nDifference :", diff_thresh)
+            
+        
+        max_thresh = threshs[idx_max_thresh]
+
+        print("Best threshold found with confidence", theta_thresh, ":", max_thresh)
 
         # Test set f1_score
 
-        s.run(threshold_tf.assign(thresh))
+        s.run(threshold_tf.assign(max_thresh))
 
-        print("\nTest set F1-score with best threshold :", thresh)
+        print("\nTest set F1-score with best threshold :", max_thresh)
 
         f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, test_set, 
             global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
