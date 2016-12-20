@@ -355,10 +355,10 @@ def main(argv=None):
             for i in range(1, TEST_SIZE + 1):
                 print('test prediction {}'.format(i))
                 pimg = pred_help.get_prediction_image(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                            global_vars, thresh)
+                                            global_vars, max_thresh)
                 Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
                 oimg = pred_help.get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                                   global_vars, thresh)
+                                                   global_vars, max_thresh)
                 oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
         logger.save_log()
