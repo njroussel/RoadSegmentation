@@ -31,6 +31,18 @@ FLAGS = tf.app.flags.FLAGS
 if not os.path.exists(FLAGS.train_dir):
     os.makedirs(FLAGS.train_dir)
 
+save_model_folder = "model_save/"
+save_model_file_name = "last_model"
+
+# Getting arguments for model folder
+if len(sys.argv) == 2:
+    save_model_file_name = sys.argv[1]
+if len(sys.argv) == 3:
+    save_model_folder = sys.argv[1]
+    save_model_file_name = sys.argv[2]
+
+save_model_file_name += ".ckpt"
+
 SEED = global_vars.SEED
 
 def main(argv=None):
@@ -191,8 +203,10 @@ def main(argv=None):
 
     if global_vars.RESTORE_MODEL:
         # Restore variables from disk.
-        saver.restore(s, FLAGS.train_dir + "/model.ckpt")
-        print("Model restored.")
+        if not os.path.exists(save_model_folder + save_model_file_name + ".index"):
+            raise ValueError("model not found : " +  save_model_folder + save_model_file_name)
+        saver.restore(s, save_model_folder + save_model_file_name)
+        print("Model restored from :", save_model_folder + save_model_file_name)
     else:
         # run initialisation of variables
         s.run(init)
@@ -276,100 +290,104 @@ def main(argv=None):
         
         logger.set_log("Epoch_stop", epoch + 1)
 
-        print("\n******************************************************************************")
-        print("Finished training")
+    print("\n******************************************************************************")
+    print("Finished training")
 
-        print("\nScoring on validation set")
+    print("\nScoring on validation set")
 
-        acc = batch_sum(s, eval_accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
-        accuracy = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
-        logger.append_log("Accuracy_validation", accuracy)
+    acc = batch_sum(s, eval_accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+    accuracy = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
+    logger.append_log("Accuracy_validation", accuracy)
 
-        print("Accuracy rating is :", accuracy)
+    print("Accuracy rating is :", accuracy)
 
-        print("\nScoring on testing set")
+    print("\nScoring on testing set")
 
-        acc = batch_sum(s, eval_accuracy_graph, test_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
-        accuracy = acc / int(np.ceil(len(test_set[0]) / global_vars.EVAL_BATCH_SIZE))
-        logger.set_log("Accuracy_test", accuracy)
+    acc = batch_sum(s, eval_accuracy_graph, test_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+    accuracy = acc / int(np.ceil(len(test_set[0]) / global_vars.EVAL_BATCH_SIZE))
+    logger.set_log("Accuracy_test", accuracy)
 
-        print("Accuracy rating is :", accuracy)
+    print("Accuracy rating is :", accuracy)
 
-        print("\n******************************************************************************")
-        print("Finding best f1_score with different thresholds")
-        # Computing F1 score from predictions with different thresholds
-        thresh_start = 0
-        thresh_end = 1
-        thresh_steps = 10
-        theta_thresh = global_vars.THETA_THRESH
+    print("\n******************************************************************************")
+    print("Finding best f1_score with different thresholds")
+    # Computing F1 score from predictions with different thresholds
+    thresh_start = 0
+    thresh_end = 1
+    thresh_steps = 10
+    theta_thresh = global_vars.THETA_THRESH
 
 
-        diff_thresh = 1
-        while (diff_thresh > theta_thresh):
-            print("\nTesting for threshold between", thresh_start, "and", thresh_end)
-            threshs = np.linspace(thresh_start, thresh_end, thresh_steps)
-            f1_scores = []
+    diff_thresh = 1
+    while (diff_thresh > theta_thresh):
+        print("\nTesting for threshold between", thresh_start, "and", thresh_end)
+        threshs = np.linspace(thresh_start, thresh_end, thresh_steps)
+        f1_scores = []
 
-            for thresh in threshs:
-                s.run(threshold_tf.assign(thresh))
+        for thresh in threshs:
+            s.run(threshold_tf.assign(thresh))
 
-                print("\nComputing F1-score with threshold :",thresh)
+            print("\nComputing F1-score with threshold :",thresh)
 
-                f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, valid_set, 
-                    global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+            f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, valid_set, 
+                global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
-                f1_scores.append(f1_score)
+            f1_scores.append(f1_score)
 
-                print("F1-score :",f1_score)
+            print("F1-score :",f1_score)
 
-            # Output test with best Threshold
-            logger.append_log("F1-score_validation", f1_scores)
-            logger.append_log("F1-score_threshs_validation", threshs)
-            idx_max_thresh = np.argmax(f1_scores)
-            diff_thresh = f1_scores[idx_max_thresh] - f1_scores[0]
-            thresh_start = threshs[max(idx_max_thresh-1, 0)]
-            thresh_end = threshs[min(idx_max_thresh+1, thresh_steps-1)]
+        # Output test with best Threshold
+        logger.append_log("F1-score_validation", f1_scores)
+        logger.append_log("F1-score_threshs_validation", threshs)
+        idx_max_thresh = np.argmax(f1_scores)
+        diff_thresh = f1_scores[idx_max_thresh] - f1_scores[0]
+        thresh_start = threshs[max(idx_max_thresh-1, 0)]
+        thresh_end = threshs[min(idx_max_thresh+1, thresh_steps-1)]
 
-            print("\nDifference :", diff_thresh)
-            
+        print("\nDifference :", diff_thresh)
         
-        max_thresh = threshs[idx_max_thresh]
+    
+    max_thresh = threshs[idx_max_thresh]
 
-        print("Best threshold found with confidence", theta_thresh, ":", max_thresh)
+    print("Best threshold found with confidence", theta_thresh, ":", max_thresh)
 
-        # Test set f1_score
+    # Test set f1_score
 
-        s.run(threshold_tf.assign(max_thresh))
+    s.run(threshold_tf.assign(max_thresh))
 
-        print("\nTest set F1-score with best threshold :", max_thresh)
+    print("\nTest set F1-score with best threshold :", max_thresh)
 
-        f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, test_set, 
-            global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+    f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, test_set, 
+        global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
-        logger.set_log("F1-score_test", f1_score)
+    logger.set_log("F1-score_test", f1_score)
 
-        print("F1-score:", f1_score)
+    print("F1-score:", f1_score)
 
-        if global_vars.TEST_PREDICTIONS:
-            ## Run on test set.
-            print("\n******************************************************************************")
-            print('Running on test set\n')
-            FILE_REGEX = 'test_%d'
-            TEST_SIZE = 50
-            test_data_filename = './test_set_images/'
-            test_dir = 'test_predictions/'
-            if not os.path.isdir(test_dir):
-                os.mkdir(test_dir)
-            for i in range(1, TEST_SIZE + 1):
-                print('test prediction {}'.format(i))
-                pimg = pred_help.get_prediction_image(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                            global_vars, max_thresh)
-                Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
-                oimg = pred_help.get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                                   global_vars, max_thresh)
-                oimg.save(test_dir + "overlay_" + str(i) + ".png")
+    if not global_vars.RESTORE_MODEL:
+        print("\nSaving our model")
+        saver.save(s, save_model_folder + save_model_file_name)
 
-        logger.save_log()
+    if global_vars.TEST_PREDICTIONS:
+        ## Run on test set.
+        print("\n******************************************************************************")
+        print('Running on test set\n')
+        FILE_REGEX = 'test_%d'
+        TEST_SIZE = 50
+        test_data_filename = './test_set_images/'
+        test_dir = 'test_predictions/'
+        if not os.path.isdir(test_dir):
+            os.mkdir(test_dir)
+        for i in range(1, TEST_SIZE + 1):
+            print('test prediction {}'.format(i))
+            pimg = pred_help.get_prediction_image(test_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                        global_vars, max_thresh)
+            Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
+            oimg = pred_help.get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                                global_vars, max_thresh)
+            oimg.save(test_dir + "overlay_" + str(i) + ".png")
+
+    logger.save_log()
 
 if __name__ == '__main__':
     tf.app.run()
