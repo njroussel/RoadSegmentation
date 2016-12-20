@@ -20,7 +20,7 @@ logs = {
     "Seed": SEED,
     "Batch_size": BATCH_SIZE,
     "Num_epoch": NUM_EPOCHS,
-    "Theta_thresh": THETA_THESH, 
+    "Theta_thresh": THETA_THRlESH, 
     "Rotate_images": ROTATE_IMAGES,
     "Nbr_rotated_img": ROTATED_IMG,
     "Conv_arch": CONV_ARCH,
