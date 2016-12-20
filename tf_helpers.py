@@ -5,7 +5,7 @@ import tensorflow as tf
 import image_helpers as img_help
 
 
-def seperate_set(data, labels, train_per, val_per):
+def separate_set(data, labels, train_per, val_per):
     indices = np.random.permutation(data.shape[0])
 
     train_len = int(train_per * len(indices))

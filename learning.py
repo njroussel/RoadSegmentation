@@ -70,7 +70,7 @@ def main(argv=None):
 
     # Seperating our data in three distinct sets (taining, validation, testing)
     # and normalization
-    (train_set, valid_set, test_set, means, stds) = seperate_set(data, labels,
+    (train_set, valid_set, test_set, means, stds) = separate_set(data, labels,
                                                                  global_vars.VALIDATION_TRAIN_PERC,
                                                                  global_vars.VALIDATION_VAL_PERC)
 

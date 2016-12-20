@@ -13,16 +13,16 @@ from tf_helpers import *
 
 def learn(sat_images, label_images, configuration, SEED, FLAGS, save_model_filepath):
     # Getting the data on which we are going to train
+
     data, labels = preparing_data(
         sat_images, label_images, configuration.ROTATE_IMAGES, configuration.ROTATED_IMG,
         configuration.IMG_PATCH_SIZE, configuration.IMG_BORDER)
 
     # Seperating our data in three distinct sets (taining, validation, testing)
     # and normalization
-    (train_set, valid_set, test_set, means, stds) = seperate_set(data, labels,
+    (train_set, valid_set, test_set, means, stds) = separate_set(data, labels,
                                                                  configuration.VALIDATION_TRAIN_PERC,
                                                                  configuration.VALIDATION_VAL_PERC)
-
     # Balancing data
     train_set = img_help.balance_data(train_set[0], train_set[1])
 

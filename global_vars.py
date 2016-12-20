@@ -11,7 +11,6 @@ ROTATED_IMG = 50
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
 POST_PROCESS = True
 TEST_PREDICTIONS = True
-ENABLE_RECORDING = False
 RECORDING_STEP = 1000
 LEARNING_RATE = 0.001
 

@@ -81,7 +81,7 @@ def main(argv=None):
         output_dir = 'test_predictions/'
 
         pred_help.get_prediction_images(file_regex, input_dir, output_dir, test_size, s, model,
-                                        means, stds, global_vars, max_thresh, True)
+                                        means, stds, global_vars, max_thresh, False)
 
     ###############################################
     ###############################################
@@ -90,16 +90,16 @@ def main(argv=None):
     ###############################################
 
     if global_vars.POST_PROCESS:
-        tf.app.flags.DEFINE_string(
-            'train_dir', '/tmp/model', """Directory where to write event logs and checkpoint.""")
-
+        print("\n******************************************************************************")
+        print("\n******************************POSTPROCESSING**********************************")
+        print("\n******************************************************************************")
         flags = tf.app.flags.FLAGS
 
         # Create save directory if needed
         if not os.path.exists(flags.train_dir):
             os.makedirs(flags.train_dir)
 
-        save_model_folder = "save_model_pp/"
+        save_model_folder = "model_save_pp/"
 
         # input files
         train_data_filename = './predictions_training/'
@@ -137,7 +137,7 @@ def main(argv=None):
             output_dir = 'test_predictions_post/'
 
             pred_help.get_prediction_images(file_regex, input_dir, output_dir, test_size, s, model,
-                                            means, stds, global_vars, max_thresh, False)
+                                            means, stds, global_vars_pp, max_thresh, True)
 
 
 if __name__ == '__main__':

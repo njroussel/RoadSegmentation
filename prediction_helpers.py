@@ -28,7 +28,7 @@ def get_image_summary_3d(img):
     return V
 
 
-def get_prediction_images(file_regex, input_dir, output_dir, size, s, model, means, stds, global_vars, thresh, overlay):
+def get_prediction_images(file_regex, input_dir, output_dir, size, s, model, means, stds, global_vars, thresh, post_process):
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 
@@ -38,9 +38,14 @@ def get_prediction_images(file_regex, input_dir, output_dir, size, s, model, mea
         img_filename = input_dir + image_id + ".png"
 
         p_img = get_prediction_image(img_filename, s, model, means, stds, global_vars, thresh)
+        if post_process:
+            p_img = quantize_binary_images(
+                [p_img], global_vars.IMG_PATCH_SIZE, global_vars.INPUT_PATCH_SIZE)[0]
+            p_img = p_img.reshape(p_img.shape[0], p_img.shape[1])
+            p_img = img_float_to_uint8(p_img)
         Image.fromarray(p_img).save(output_dir + "prediction_" + str(i) + ".png")
 
-        if overlay:
+        if not post_process:
             oimg = get_prediction_with_overlay(img_filename, s, model, means, stds, global_vars, thresh)
             oimg.save(output_dir + "overlay_" + str(i) + ".png")
 
