@@ -60,7 +60,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     if TRAINING_SIZE > 100:
         # Add our images to training set only
-        to_add = int(min(train_limit, TRAINING_SIZE-100))
+        to_add = int(min(train_limit, TRAINING_SIZE - 100))
         excess_sat_images = sat_images[100:, :, :, :]
         excess_label_images = label_images[100:, :, :]
 
@@ -71,11 +71,12 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     if ROTATE_IMAGES:
         for i in range(train_data.shape[0]):
-            angle = np.random.rand() * 360
-            rot_data = rotate_image(train_data[i], angle)
-            rot_label = rotate_image(train_labels[i], angle)
-            train_data = np.append(train_data, [rot_data], axis=0)
-            train_labels = np.append(train_labels, [rot_label], axis=0)
+            for j in range(ROTATION_AMOUNT):
+                angle = np.random.rand() * 360
+                rot_data = rotate_image(train_data[i], angle)
+                rot_label = rotate_image(train_labels[i], angle)
+                train_data = np.append(train_data, [rot_data], axis=0)
+                train_labels = np.append(train_labels, [rot_label], axis=0)
 
     train_data = extract_data(train_data, IMG_PATCH_SIZE, IMG_BORDER)
     train_labels = extract_labels(train_labels, IMG_PATCH_SIZE)
@@ -182,8 +183,8 @@ def main(argv=None):  # pylint: disable=unused-argument
         hidden = tf.nn.relu(tf.matmul(reshape, fc1_weights) + fc1_biases)
         # Add a 50% dropout during training only. Dropout also scales
         # activations such that no rescaling is needed at evaluation time.
-        if train:
-            hidden = tf.nn.dropout(hidden, 0.5, seed=SEED)
+        # if train:
+        #   hidden = tf.nn.dropout(hidden, 0.5, seed=SEED)
         out = tf.matmul(hidden, fc2_weights) + fc2_biases
         return out
 

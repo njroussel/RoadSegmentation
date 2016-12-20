@@ -1,10 +1,9 @@
-import tensorflow as tf
 import numpy as np
-import sys
 import progressbar
+import tensorflow as tf
 
-import prediction_helpers as pred_help
 import image_helpers as img_help
+
 
 def seperate_set(data, labels, train_per, val_per):
     indices = np.random.permutation(data.shape[0])
@@ -13,8 +12,8 @@ def seperate_set(data, labels, train_per, val_per):
     valid_len = int(val_per * len(indices))
 
     train_idx = indices[:train_len]
-    valid_idx = indices[train_len:train_len+valid_len]
-    test_idx = indices[train_len+valid_len:]
+    valid_idx = indices[train_len:train_len + valid_len]
+    test_idx = indices[train_len + valid_len:]
 
     train_data = data[train_idx]
     train_labels = labels[train_idx]
@@ -34,7 +33,6 @@ def seperate_set(data, labels, train_per, val_per):
 
 
 def preparing_data(sat_images, label_images, rotate_image, nbr_rot, img_patch_size, img_border):
-
     # Adding rotated images
     if rotate_image:
         perm = np.random.choice(sat_images.shape[0], sat_images.shape[0])
@@ -61,7 +59,7 @@ def preparing_data(sat_images, label_images, rotate_image, nbr_rot, img_patch_si
 
     return data, labels
 
-        
+
 def batch_sum(s, func_sum, data_set, eval_batch_size, eval_data_node, eval_label_node):
     # TODO: put this in a function
     # Evaluating accuracy for EVAL_BATCH_SIZE parts of the validation set
@@ -73,7 +71,7 @@ def batch_sum(s, func_sum, data_set, eval_batch_size, eval_data_node, eval_label
     score_bar = progressbar.ProgressBar(max_value=len(batch_idxs)).start()
 
     acc = 0
-    
+
     for batch_idx in batch_idxs:
         score_bar.update(b_update)
         b_update += 1
@@ -82,7 +80,7 @@ def batch_sum(s, func_sum, data_set, eval_batch_size, eval_data_node, eval_label
             batch_idx = range(set_len)[-eval_batch_size:]
 
         feed_dict = {eval_data_node: data_set[0][batch_idx],
-            eval_label_node: data_set[1][batch_idx]}
+                     eval_label_node: data_set[1][batch_idx]}
 
         acc += s.run(func_sum, feed_dict=feed_dict)
 
@@ -100,7 +98,8 @@ def init_fc_layers(fc_arch, fc_params, prev_layer, dropout, seed=None):
 
     fc_end = tf.matmul(prev_layer, fc_params[-1][0]) + fc_params[-1][1]
 
-    return fc_end  
+    return fc_end
+
 
 def init_conv_layers(conv_arch, conv_params, prev_layer):
     # convolution layers
@@ -127,6 +126,7 @@ def init_conv_layers(conv_arch, conv_params, prev_layer):
 
     return prev_layer
 
+
 def params_conv_layers(conv_arch, conv_depth, channels, seed=None):
     # init of conv parameters
     conv_params = [None] * len(conv_arch)
@@ -148,8 +148,8 @@ def params_conv_layers(conv_arch, conv_depth, channels, seed=None):
 
     return conv_params, new_depth
 
-def params_fc_layers(fc_arch, fc_depth, depth_conv, last_depth, seed=None):
 
+def params_fc_layers(fc_arch, fc_depth, depth_conv, last_depth, seed=None):
     fc_param = []
 
     prev_depth = depth_conv
@@ -173,8 +173,8 @@ def params_fc_layers(fc_arch, fc_depth, depth_conv, last_depth, seed=None):
 
     return fc_param
 
-def init_cov_matrix_tf(predictions, correct_predictions):
 
+def init_cov_matrix_tf(predictions, correct_predictions):
     true_pred = tf.boolean_mask(predictions, correct_predictions)
     false_pred = tf.boolean_mask(predictions, tf.logical_not(correct_predictions))
 
@@ -183,17 +183,17 @@ def init_cov_matrix_tf(predictions, correct_predictions):
     falsePos = tf.reduce_sum(tf.cast(tf.equal(false_pred, 1), tf.float32))
 
     trueNeg = tf.reduce_sum(tf.cast(tf.equal(true_pred, 0), tf.float32))
-         
+
     falseNeg = tf.reduce_sum(tf.cast(tf.equal(false_pred, 0), tf.float32))
-    
+
     return (truePos, falsePos, trueNeg, falseNeg)
 
 
 def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size, eval_data_node, eval_label_node):
     # Evaluating accuracy for EVAL_BATCH_SIZE parts of the validation set
-    
+
     truePos, falsePos, trueNeg, falseNeg = init_cov_matrix_tf(predictions, correct_predictions)
-    
+
     TP = 0
     FP = 0
     FN = 0
@@ -206,9 +206,8 @@ def compute_f1_tf(s, predictions, correct_predictions, data_set, eval_batch_size
     score_bar = progressbar.ProgressBar(max_value=len(batch_idxs))
 
     for batch_idx in batch_idxs:
-
         feed_dict = {eval_data_node: data_set[0][batch_idx],
-            eval_label_node: data_set[1][batch_idx]}
+                     eval_label_node: data_set[1][batch_idx]}
 
         truePos_res, falsePos_res, falseNeg_res = s.run([truePos, falsePos, falseNeg], feed_dict=feed_dict)
 

@@ -1,5 +1,6 @@
-from global_vars import *
 import time
+
+from global_vars import *
 
 params_file_name = 'runs.txt'
 
@@ -21,25 +22,28 @@ logs = {
     "Rotate_images": ROTATE_IMAGES,
     "Nbr_rotated_img": ROTATED_IMG,
     "Conv_arch": CONV_ARCH,
-    "Conv_depth": CONV_DEPTH, 
-    "Fc_arch": FC_ARCH, 
-    "Fc_depth": FC_DEPTH, 
-    "Img_border": IMG_BORDER, 
-    "Validation_train_perc": VALIDATION_TRAIN_PERC, 
-    "Validation_val_perc": VALIDATION_VAL_PERC, 
-    "Validation_test_perc": VALIDATION_TEST_PERC, 
+    "Conv_depth": CONV_DEPTH,
+    "Fc_arch": FC_ARCH,
+    "Fc_depth": FC_DEPTH,
+    "Img_border": IMG_BORDER,
+    "Validation_train_perc": VALIDATION_TRAIN_PERC,
+    "Validation_val_perc": VALIDATION_VAL_PERC,
+    "Validation_test_perc": VALIDATION_TEST_PERC,
 }
+
 
 def append_log(who, what):
     logs[who].append(what)
 
+
 def set_log(who, what):
     logs[who] = what
+
 
 def save_log():
     param_file = open(params_file_name, 'a')
     param_file.write("Date={}:\n".format(time.strftime("%c")))
     for key, value in logs.items():
-        param_file.write(key + "=" + str(value) + "\n") 
+        param_file.write(key + "=" + str(value) + "\n")
     param_file.write("################################################################################\n\n")
     param_file.close()

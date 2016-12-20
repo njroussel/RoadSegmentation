@@ -4,18 +4,12 @@ New version of the code for clear understanding of the method with better modula
 
 """
 
-import tensorflow as tf
-import numpy as np
-from PIL import Image
-import sys
 import os
-import progressbar
 
-import prediction_helpers as pred_help
-import image_helpers as img_help
+from PIL import Image
+
 import global_vars
 import logger
-
 from tf_helpers import *
 
 # Initialisation of some flags for tensor flow
@@ -28,6 +22,7 @@ tf.app.flags.DEFINE_string(
 FLAGS = tf.app.flags.FLAGS
 
 SEED = global_vars.SEED
+
 
 def main(argv=None):
     # setup seeds
@@ -45,15 +40,15 @@ def main(argv=None):
     f1_validation_per_epoch = []
     f1_training_per_epoch = []
     loss_per_recording_step = []
-    
+
     # File regex to load the images for training and testing
     FILE_REGEX = "satImage_%.3d"
-    
+
     # Getting training images
     print("\nLoading images :")
     print("******************************************************************************")
     sat_images, label_images = img_help.read_images(
-        train_data_filename, train_labels_filename, 
+        train_data_filename, train_labels_filename,
         global_vars.TRAINING_SIZE, FILE_REGEX)
 
     # Getting the data on which we are going to train
@@ -63,15 +58,16 @@ def main(argv=None):
 
     # Seperating our data in three distinct sets (taining, validation, testing)
     # and normalization
-    (train_set, valid_set, test_set, means, stds) = seperate_set(data, labels, 
-        global_vars.VALIDATION_TRAIN_PERC, global_vars.VALIDATION_VAL_PERC)
+    (train_set, valid_set, test_set, means, stds) = seperate_set(data, labels,
+                                                                 global_vars.VALIDATION_TRAIN_PERC,
+                                                                 global_vars.VALIDATION_VAL_PERC)
 
     # Balancing data
     train_set = img_help.balance_data(train_set[0], train_set[1])
 
     print("******************************************************************************")
-    print("\nWe will train on", len(train_set[0]), "patches of size", 
-        str(global_vars.IMG_TOTAL_SIZE)+ "x" + str(global_vars.IMG_TOTAL_SIZE))
+    print("\nWe will train on", len(train_set[0]), "patches of size",
+          str(global_vars.IMG_TOTAL_SIZE) + "x" + str(global_vars.IMG_TOTAL_SIZE))
 
     print("\nInitializing tensorflow graphs for training and validating")
 
@@ -81,7 +77,7 @@ def main(argv=None):
     train_data_node = tf.placeholder(
         tf.float32,
         shape=(
-            global_vars.BATCH_SIZE, global_vars.IMG_TOTAL_SIZE, 
+            global_vars.BATCH_SIZE, global_vars.IMG_TOTAL_SIZE,
             global_vars.IMG_TOTAL_SIZE, global_vars.NUM_CHANNELS))
 
     train_label_node = tf.placeholder(
@@ -90,8 +86,8 @@ def main(argv=None):
 
     eval_data_node = tf.placeholder(
         tf.float32,
-        shape=(None, global_vars.IMG_TOTAL_SIZE, 
-            global_vars.IMG_TOTAL_SIZE, global_vars.NUM_CHANNELS))
+        shape=(None, global_vars.IMG_TOTAL_SIZE,
+               global_vars.IMG_TOTAL_SIZE, global_vars.NUM_CHANNELS))
 
     eval_label_node = tf.placeholder(
         tf.float32,
@@ -140,7 +136,7 @@ def main(argv=None):
     for params in fc_params[1:]:
         regularizers += tf.nn.l2_loss(params[0])
         regularizers += tf.nn.l2_loss(params[1])
-    
+
     # Add the regularization term to the loss.
     loss += 5e-4 * (regularizers)
 
@@ -156,14 +152,14 @@ def main(argv=None):
     train_prediction_graph = tf.nn.softmax(logits)
     # Compute predictions for validation and test
     correct_predictions_train_graph = tf.equal(
-        tf.argmax(train_prediction_graph,1), tf.argmax(train_label_node,1))
+        tf.argmax(train_prediction_graph, 1), tf.argmax(train_label_node, 1))
     # Accuracy for training
     accuracy_train_graph = tf.reduce_mean(tf.cast(correct_predictions_train_graph, tf.float32))
 
     # Validation / Testing set predictions
     eval_predictions_graph = tf.nn.softmax(model(eval_data_node))
     # Compute predictions for validation and test
-    eval_correct_predictions_graph = tf.equal(tf.argmax(eval_predictions_graph,1), tf.argmax(eval_label_node,1))
+    eval_correct_predictions_graph = tf.equal(tf.argmax(eval_predictions_graph, 1), tf.argmax(eval_label_node, 1))
     # Accuracy computation
     eval_accuracy_graph = tf.reduce_mean(tf.cast(eval_correct_predictions_graph, tf.float32))
 
@@ -173,7 +169,7 @@ def main(argv=None):
     # Index [0] corresponds to a road, which we will consider as positive therefore 1.
     pos_predictions_thresh_graph = tf.cast(tf.transpose(eval_predictions_graph)[0] > threshold_tf, tf.int64)
     # Here for the true labels we have the oposite -> 1 is background, road is 0 so we use argmin to reverse that
-    true_predictions_graph = tf.argmin(eval_label_node,1)
+    true_predictions_graph = tf.argmin(eval_label_node, 1)
     # Here we have a boolean array with true values where instances of the prediction correspond to the labels.
     correct_predictions_thresh = tf.equal(pos_predictions_thresh_graph, true_predictions_graph)
 
@@ -209,12 +205,12 @@ def main(argv=None):
             batch_size = global_vars.BATCH_SIZE
             for epoch in range(num_epochs):
                 print("\n******************************************************************************")
-                print("training for epoch :", epoch+1, "out of", num_epochs, "epochs")
+                print("training for epoch :", epoch + 1, "out of", num_epochs, "epochs")
 
                 perm_idx = np.random.permutation(train_size)
                 batch_bar = progressbar.ProgressBar(max_value=int(train_size / global_vars.BATCH_SIZE))
                 for step in range(int(train_size / global_vars.BATCH_SIZE)):
-                    batch_idx = perm_idx[step * batch_size : (step+1) * batch_size]
+                    batch_idx = perm_idx[step * batch_size: (step + 1) * batch_size]
 
                     # Compute the offset of the current minibatch in the data.
                     # Note that we could use better randomization across epochs.
@@ -225,24 +221,27 @@ def main(argv=None):
                     # node in the graph is should be fed to.
                     feed_dict = {train_data_node: batch_data,
                                  train_label_node: batch_labels}
-                    
+
                     if step % global_vars.RECORDING_STEP == 0:
                         _, l = s.run(
                             [optimizer, loss], feed_dict=feed_dict)
-                        
+
                         print("\ncomputing intermediate accuracy and loss at step", step)
                         print("computing train accuracy")
-                        acc = batch_sum(s, eval_accuracy_graph, train_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+                        acc = batch_sum(s, eval_accuracy_graph, train_set, global_vars.EVAL_BATCH_SIZE, eval_data_node,
+                                        eval_label_node)
                         train_acc = acc / int(np.ceil(len(train_set[0]) / global_vars.EVAL_BATCH_SIZE))
                         logger.append_log("Accuracy_training", train_acc)
 
                         print("computing validation accuracy")
-                        acc = batch_sum(s, eval_accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+                        acc = batch_sum(s, eval_accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node,
+                                        eval_label_node)
                         valid_acc = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
                         logger.append_log("Accuracy_validation", valid_acc)
 
-                        print('\n%.2f' % (float(step) * global_vars.BATCH_SIZE / train_size) + '% of Epoch ' + str(epoch + 1))
-                        print("loss :",l)
+                        print('\n%.2f' % (float(step) * global_vars.BATCH_SIZE / train_size) + '% of Epoch ' + str(
+                            epoch + 1))
+                        print("loss :", l)
                         print("training set accuracy :", train_acc)
                         print("validation set accuracy :", valid_acc)
 
@@ -265,7 +264,7 @@ def main(argv=None):
         except KeyboardInterrupt:
             print("Interrupted at epoch ", epoch + 1)
             pass
-        
+
         logger.set_log("Epoch_stop", epoch + 1)
 
         print("\n******************************************************************************")
@@ -296,15 +295,15 @@ def main(argv=None):
         for thresh in threshs:
             s.run(threshold_tf.assign(thresh))
 
-            print("\nComputing F1-score with threshold :",thresh)
+            print("\nComputing F1-score with threshold :", thresh)
 
-            f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, valid_set, 
-                global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+            f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, valid_set,
+                                     global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
             f1_scores.append(f1_score)
             logger.append_log("F1-score_validation", f1_score)
 
-            print("F1-score :",f1_score)
+            print("F1-score :", f1_score)
 
         # Output test with best Threshold
         thresh = threshs[np.argmax(f1_scores)]
@@ -315,12 +314,30 @@ def main(argv=None):
 
         print("\nTest set F1-score with best threshold :", thresh)
 
-        f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, test_set, 
-            global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+        f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, test_set,
+                                 global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
         logger.set_log("F1-score_test", f1_score)
 
         print("F1-score:", f1_score)
+
+        if global_vars.TRAIN_PREDICTIONS:
+            ## Run on test set.
+            print("\n******************************************************************************")
+            print('Running on train set\n')
+            FILE_REGEX = 'satImage_%.3d'
+            test_data_filename = './training/images/'
+            test_dir = 'predictions_training/'
+            if not os.path.isdir(test_dir):
+                os.mkdir(test_dir)
+            for i in range(1, global_vars.TRAINING_SIZE + 1):
+                print('train prediction {}'.format(i))
+                pimg = pred_help.get_prediction_image(test_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                                      global_vars, thresh)
+                Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
+                oimg = pred_help.get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds,
+                                                             global_vars, thresh)
+                oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
         if global_vars.TEST_PREDICTIONS:
             ## Run on test set.
@@ -335,16 +352,14 @@ def main(argv=None):
             for i in range(1, TEST_SIZE + 1):
                 print('test prediction {}'.format(i))
                 pimg = pred_help.get_prediction_image(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                            global_vars, thresh)
+                                                      global_vars, thresh)
                 Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
                 oimg = pred_help.get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                                   global_vars, thresh)
+                                                             global_vars, thresh)
                 oimg.save(test_dir + "overlay_" + str(i) + ".png")
 
         logger.save_log()
 
+
 if __name__ == '__main__':
     tf.app.run()
-    
-
-    
