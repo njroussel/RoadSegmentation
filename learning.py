@@ -22,10 +22,14 @@ from tf_helpers import *
 # (In this case we declare the directory to store nets as we go)
 
 tf.app.flags.DEFINE_string(
-    'train_dir', '/tmp/mnist',
+    'train_dir', '/tmp/model',
     """Directory where to write event logs and checkpoint.""")
 
 FLAGS = tf.app.flags.FLAGS
+
+# Create save directory if needed
+if not os.path.exists(FLAGS.train_dir):
+    os.makedirs(FLAGS.train_dir)
 
 SEED = global_vars.SEED
 
@@ -246,6 +250,8 @@ def main(argv=None):
                         print("training set accuracy :", train_acc)
                         print("validation set accuracy :", valid_acc)
 
+                        saver.save(s, FLAGS.train_dir + "/model.ckpt")
+
                         print("\nContinuing training steps")
 
                         # TODO: do a logging function
@@ -264,6 +270,8 @@ def main(argv=None):
                 # What do here ? nothing normally as done at beginning of each epoch
         except KeyboardInterrupt:
             print("Interrupted at epoch ", epoch + 1)
+            print("Restoring model from last evaluation")
+            saver.restore(s, FLAGS.train_dir + "/model.ckpt")
             pass
         
         logger.set_log("Epoch_stop", epoch + 1)
