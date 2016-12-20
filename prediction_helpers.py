@@ -36,7 +36,6 @@ def get_prediction_image(filename, image_idx, s, model, file_regex, means, stds,
     if len(tmp.shape) == 2:
         imgs = quantize_binary_images([img], IMG_PATCH_SIZE, PP_IMG_PATCH_SIZE)
         img = imgs[0]
-        img = img.reshape(img.shape[0], img.shape[1], 1)
 
     img_prediction = get_prediction(img, s, model, means, stds, global_vars, thresh)
 

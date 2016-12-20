@@ -49,11 +49,11 @@ COMPUTE_VALIDATION_F1_SCORE_FOR_EACH_EPOCH = True
 
 PP_NUM_CHANNELS = 1  # Binary images
 PP_NUM_LABELS = 2
-PP_TRAINING_SIZE = 100
+PP_TRAINING_SIZE = 20
 PP_SEED = 43212  # Set to None for random seed.
 PP_EVAL_BATCH_SIZE = 128  # 64
 PP_BATCH_SIZE = 16
-PP_NUM_EPOCHS = 30  # Will later be determined by validation.
+PP_NUM_EPOCHS = 3  # Will later be determined by validation.
 PP_ROTATION_AMOUNT = 3
 PP_ROTATE_IMAGES = True
 PP_RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
@@ -72,7 +72,7 @@ PP_CONV_ARCH = [1]
 PP_IMG_PATCH_SIZE = 2  # MUST BE EVEN
 
 # Border for enhanced context.
-PP_IMG_BORDER = 4  # MUST BE EVEN (could eventually be even ....)
+PP_IMG_BORDER = 2  # MUST BE EVEN (could eventually be even ....)
 
 PP_IMG_TOTAL_SIZE = PP_IMG_PATCH_SIZE + 2 * PP_IMG_BORDER
 
