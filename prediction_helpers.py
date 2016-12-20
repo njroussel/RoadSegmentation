@@ -28,13 +28,30 @@ def get_image_summary_3d(img):
     return V
 
 
-def get_prediction_image(filename, image_idx, s, model, file_regex, means, stds, global_vars, thresh):
-    imageid = file_regex % image_idx
-    image_filename = filename + imageid + ".png"
-    img = mpimg.imread(image_filename)
+def get_prediction_images(file_regex, input_dir, output_dir, size, s, model, means, stds, global_vars, thresh, overlay):
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+
+    # TODO : Progress bar
+    for i in range(1, size + 1):
+        image_id = file_regex % i
+        img_filename = input_dir + image_id + ".png"
+
+        p_img = get_prediction_image(img_filename, s, model, means, stds, global_vars, thresh)
+        Image.fromarray(p_img).save(output_dir + "prediction_" + str(i) + ".png")
+
+        if overlay:
+            oimg = get_prediction_with_overlay(img_filename, s, model, means, stds, global_vars, thresh)
+            oimg.save(output_dir + "overlay_" + str(i) + ".png")
+
+        print('Completed image{}'.format(i))
+
+
+def get_prediction_image(img_filename, s, model, means, stds, global_vars, thresh):
+    img = mpimg.imread(img_filename)
     tmp = np.array(img)
     if len(tmp.shape) == 2:
-        imgs = quantize_binary_images([img], IMG_PATCH_SIZE, PP_IMG_PATCH_SIZE)
+        imgs = quantize_binary_images([img], global_vars.INPUT_PATCH_SIZE, global_vars.IMG_PATCH_SIZE)
         img = imgs[0]
 
     img_prediction = get_prediction(img, s, model, means, stds, global_vars, thresh)
@@ -107,10 +124,8 @@ def get_prediction_from_patches(patches, s, model, eval_batch_size, img_total_si
 
 
 # Get prediction overlaid on the original image for given input file
-def get_prediction_with_overlay(filename, image_idx, s, model, file_regex, means, stds, global_vars, thresh):
-    imageid = file_regex % image_idx
-    image_filename = filename + imageid + ".png"
-    img = mpimg.imread(image_filename)
+def get_prediction_with_overlay(img_filename, s, model, means, stds, global_vars, thresh):
+    img = mpimg.imread(img_filename)
     tmp = np.array(img)
     if len(tmp.shape) == 3:
         img = img[:, :, :3]
