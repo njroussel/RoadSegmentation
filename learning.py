@@ -14,6 +14,8 @@ import progressbar
 import prediction_helpers as pred_help
 import image_helpers as img_help
 import global_vars
+import logger
+
 from tf_helpers import *
 
 # Initialisation of some flags for tensor flow
@@ -232,10 +234,12 @@ def main(argv=None):
                         print("computing train accuracy")
                         acc = batch_sum(s, eval_accuracy_graph, train_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
                         train_acc = acc / int(np.ceil(len(train_set[0]) / global_vars.EVAL_BATCH_SIZE))
+                        logger.append_log("Accuracy_training", train_acc)
 
                         print("computing validation accuracy")
                         acc = batch_sum(s, eval_accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
                         valid_acc = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
+                        logger.append_log("Accuracy_validation", valid_acc)
 
                         print('\n%.2f' % (float(step) * global_vars.BATCH_SIZE / train_size) + '% of Epoch ' + str(epoch + 1))
                         print("loss :",l)
@@ -262,6 +266,8 @@ def main(argv=None):
             print("Interrupted at epoch ", epoch + 1)
             pass
         
+        logger.set_log("Epoch_stop", epoch + 1)
+
         print("\n******************************************************************************")
         print("Finished training")
 
@@ -269,6 +275,7 @@ def main(argv=None):
 
         acc = batch_sum(s, eval_accuracy_graph, valid_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
         accuracy = acc / int(np.ceil(len(valid_set[0]) / global_vars.EVAL_BATCH_SIZE))
+        logger.append_log("Accuracy_validation", accuracy)
 
         print("Accuracy rating is :", accuracy)
 
@@ -276,6 +283,7 @@ def main(argv=None):
 
         acc = batch_sum(s, eval_accuracy_graph, test_set, global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
         accuracy = acc / int(np.ceil(len(test_set[0]) / global_vars.EVAL_BATCH_SIZE))
+        logger.set_log("Accuracy_test", accuracy)
 
         print("Accuracy rating is :", accuracy)
 
@@ -294,6 +302,7 @@ def main(argv=None):
                 global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
 
             f1_scores.append(f1_score)
+            logger.append_log("F1-score_validation", f1_score)
 
             print("F1-score :",f1_score)
 
@@ -308,6 +317,8 @@ def main(argv=None):
 
         f1_score = compute_f1_tf(s, pos_predictions_thresh_graph, correct_predictions_thresh, test_set, 
             global_vars.EVAL_BATCH_SIZE, eval_data_node, eval_label_node)
+
+        logger.set_log("F1-score_test", f1_score)
 
         print("F1-score:", f1_score)
 
@@ -329,6 +340,8 @@ def main(argv=None):
                 oimg = pred_help.get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds,
                                                    global_vars, thresh)
                 oimg.save(test_dir + "overlay_" + str(i) + ".png")
+
+        logger.save_log()
 
 if __name__ == '__main__':
     tf.app.run()
