@@ -4,53 +4,14 @@ New version of the code for clear understanding of the method with better modula
 
 """
 
-import os
 import sys
-
-from PIL import Image
 
 import global_vars
 import logger
-import prediction_helpers as pred_help
 from tf_helpers import *
 
-# Initialisation of some flags for tensor flow
-# (In this case we declare the directory to store nets as we go)
 
-tf.app.flags.DEFINE_string(
-    'train_dir', '/tmp/model',
-    """Directory where to write event logs and checkpoint.""")
-
-FLAGS = tf.app.flags.FLAGS
-
-# Create save directory if needed
-if not os.path.exists(FLAGS.train_dir):
-    os.makedirs(FLAGS.train_dir)
-
-SEED = global_vars.SEED
-
-
-def main(argv=None):
-    # setup seeds
-    np.random.seed(SEED)
-    tf.set_random_seed(SEED)
-
-    # output and input files
-    output_run_log = 'runs.txt'
-    data_dir = 'training/'
-    train_data_filename = data_dir + 'images/'
-    train_labels_filename = data_dir + 'groundtruth/'
-
-    # File regex to load the images for training and testing
-    FILE_REGEX = "satImage_%.3d"
-
-    # Getting training images
-    print("\nLoading images :")
-    print("******************************************************************************")
-    sat_images, label_images = img_help.read_images(
-        train_data_filename, train_labels_filename,
-        global_vars.TRAINING_SIZE, FILE_REGEX)
-
+def learn(sat_images, label_images, SEED, FLAGS):
     # Getting the data on which we are going to train
     data, labels = preparing_data(
         sat_images, label_images, global_vars.ROTATE_IMAGES, global_vars.ROTATED_IMG,
@@ -249,6 +210,8 @@ def main(argv=None):
 
                         print("\nContinuing training steps")
 
+                        # TODO: do a logging function
+
                         sys.stdout.flush()
                     else:
                         # Run the graph and fetch some of the nodes.
@@ -341,46 +304,6 @@ def main(argv=None):
 
         print("F1-score:", f1_score)
 
-        if global_vars.TRAIN_PREDICTIONS:
-            ## Run on test set.
-            print("\n******************************************************************************")
-            print('Running on train set\n')
-            FILE_REGEX = 'satImage_%.3d'
-            test_data_filename = './training/images/'
-            test_dir = 'predictions_training/'
-            if not os.path.isdir(test_dir):
-                os.mkdir(test_dir)
-            for i in range(1, global_vars.TRAINING_SIZE + 1):
-                print('train prediction {}'.format(i))
-                pimg = pred_help.get_prediction_image(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                                      global_vars, max_thresh)
-                Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
-                oimg = pred_help.get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                                             global_vars, max_thresh)
-                oimg.save(test_dir + "overlay_" + str(i) + ".png")
-
-        if global_vars.TEST_PREDICTIONS:
-            ## Run on test set.
-            print("\n******************************************************************************")
-            print('Running on test set\n')
-            FILE_REGEX = 'test_%d'
-            TEST_SIZE = 50
-            test_data_filename = './test_set_images/'
-            test_dir = 'test_predictions/'
-            if not os.path.isdir(test_dir):
-                os.mkdir(test_dir)
-            for i in range(1, TEST_SIZE + 1):
-                print('test prediction {}'.format(i))
-                pimg = pred_help.get_prediction_image(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-
-                                                      global_vars, max_thresh)
-                Image.fromarray(pimg).save(test_dir + "prediction_" + str(i) + ".png")
-                oimg = pred_help.get_prediction_with_overlay(test_data_filename, i, s, model, FILE_REGEX, means, stds,
-                                                             global_vars, max_thresh)
-                oimg.save(test_dir + "overlay_" + str(i) + ".png")
-
         logger.save_log()
 
-
-if __name__ == '__main__':
-    tf.app.run()
+        return s, model, means, stds, max_thresh

@@ -11,6 +11,8 @@ logs = {
     "Accuracy_test": 0,
 
     "F1-score_validation": [],
+    "F1-score_threshs_validation": [],
+
     "F1-score_test": 0,
 
     "Epoch_stop": 0,
@@ -19,6 +21,7 @@ logs = {
     "Seed": SEED,
     "Batch_size": BATCH_SIZE,
     "Num_epoch": NUM_EPOCHS,
+    "Theta_thresh": THETA_THRESH, 
     "Rotate_images": ROTATE_IMAGES,
     "Nbr_rotated_img": ROTATED_IMG,
     "Conv_arch": CONV_ARCH,
