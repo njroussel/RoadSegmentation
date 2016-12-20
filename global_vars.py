@@ -9,7 +9,7 @@ NUM_EPOCHS = 1  # Will later be determined by validation.
 ROTATE_IMAGES = False
 ROTATED_IMG = 50
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
-TRAIN_PREDICTIONS = True  # If True, restore existing model instead of training a new one
+POST_PROCESS = False
 TEST_PREDICTIONS = True
 ENABLE_RECORDING = False
 RECORDING_STEP = 1000
@@ -28,7 +28,7 @@ FC_DEPTH = [1024, 1024]
 # Set image patch size in pixels
 # IMG_PATCH_SIZE should be a multiple of 4
 # image size should be an integer multiple of this number!
-IMG_PATCH_SIZE = 4
+IMG_PATCH_SIZE = 16
 
 # Border for enhanced context.
 IMG_BORDER = 8  # Will be set after archi is found
