@@ -281,7 +281,7 @@ def learn(sat_images, label_images, configuration, SEED, FLAGS, save_model_filep
 
         # Output test with best Threshold
         logger.append_log("F1-score_validation", f1_scores)
-        logger.append_log("F1-score_threshs_validation", threshs)
+        logger.append_log("F1-score_threshs_validation", list(threshs))
         idx_max_thresh = np.argmax(f1_scores)
         diff_thresh = f1_scores[idx_max_thresh] - f1_scores[0]
         thresh_start = threshs[max(idx_max_thresh - 1, 0)]
