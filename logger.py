@@ -19,6 +19,7 @@ logs = {
     "Epoch_stop": 0,
 
     "Keep_dropout": KEEP_DROPOUT,
+    "Post_process": POST_PROCESS,
     "Training_size": TRAINING_SIZE,
     "Seed": SEED,
     "Batch_size": BATCH_SIZE,

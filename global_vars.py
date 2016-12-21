@@ -7,14 +7,15 @@ EVAL_BATCH_SIZE = 64  # 64
 BATCH_SIZE = 64
 NUM_EPOCHS = 100 # Will later be determined by validation.
 ROTATE_IMAGES = False
-ROTATED_IMG = 50
+ROTATED_IMG = 300
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
 POST_PROCESS = False
 TEST_PREDICTIONS = True
 RECORDING_STEP = 1000
 LEARNING_RATE = 0.001
+OPTI_F1 = False
 
-KEEP_DROPOUT = 0.5
+KEEP_DROPOUT = 0.8
 
 # Convolution network architecture
 CONV_ARCH = [1, 1] # The best architecture so far on validation.
@@ -32,7 +33,7 @@ FC_DEPTH = [512]
 IMG_PATCH_SIZE = 16
 
 # Border for enhanced context.
-IMG_BORDER = 0  # Will be set after archi is found
+IMG_BORDER = 16  # Will be set after archi is found
 
 IMG_TOTAL_SIZE = IMG_PATCH_SIZE + 2 * IMG_BORDER
 
