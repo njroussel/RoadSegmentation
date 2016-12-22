@@ -115,7 +115,7 @@ def main(argv=None):  # pylint: disable=unused-argument
         for layer in range(n_conv):
             conv_weights = tf.Variable(
                 tf.truncated_normal(
-                    [3, 3, prev_depth, new_depth],  # 3x3 filter, depth augmenting by few steps.
+                    [FILTER_SIZE, FILTER_SIZE, prev_depth, new_depth],
                     stddev=0.1,
                     seed=SEED))
             conv_biases = tf.Variable(tf.zeros([new_depth]))

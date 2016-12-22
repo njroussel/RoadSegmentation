@@ -35,6 +35,7 @@ logs = {
     "Validation_train_perc": VALIDATION_TRAIN_PERC,
     "Validation_val_perc": VALIDATION_VAL_PERC,
     "Validation_test_perc": VALIDATION_TEST_PERC,
+    "Filter size": FILTER_SIZE,
 }
 
 
