@@ -6,6 +6,7 @@ SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 64  # 64
 BATCH_SIZE = 64
 NUM_EPOCHS = 100 # Will later be determined by validation.
+HSV = True
 ROTATE_IMAGES = False
 ROTATED_IMG = 300
 RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
