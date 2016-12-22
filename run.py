@@ -55,6 +55,13 @@ def main(argv=None):
     sat_images, label_images = img_help.read_images(
         train_data_filename, train_labels_filename, global_vars.TRAINING_SIZE, file_regex)
 
+    if global_vars.HSV:
+        s = tf.Session()
+        sat_images = s.run(tf.image.rgb_to_hsv(sat_images, name=None))
+        s.close()
+
+    print("done")
+
     s, model, means, stds, max_thresh = learn.learn(
         sat_images, label_images, global_vars, SEED, FLAGS, save_model_file_path)
 
@@ -83,6 +90,7 @@ def main(argv=None):
         pred_help.get_prediction_images(file_regex, input_dir, output_dir, test_size, s, model,
                                         means, stds, global_vars, max_thresh, False)
 
+    s.close()
     ###############################################
     ###############################################
     ###############################################
@@ -139,6 +147,7 @@ def main(argv=None):
             pred_help.get_prediction_images(file_regex, input_dir, output_dir, test_size, s, model,
                                             means, stds, global_vars_pp, max_thresh, True)
 
+        s.close()
 
 if __name__ == '__main__':
     tf.app.run()
