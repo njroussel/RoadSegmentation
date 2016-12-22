@@ -5,7 +5,7 @@ TRAINING_SIZE = 100
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 128  # 64
 BATCH_SIZE = 128
-NUM_EPOCHS = 100 # Will later be determined by validation.
+NUM_EPOCHS = 100  # Will later be determined by validation.
 HSV = False
 ROTATE_IMAGES = True
 ROTATED_IMG = 300
@@ -20,7 +20,7 @@ FILTER_SIZE = 3
 KEEP_DROPOUT = 0.8
 
 # Convolution network architecture
-CONV_ARCH = [2, 4, 4, 4] # The best architecture so far on validation.
+CONV_ARCH = [2, 4, 4, 4]  # The best architecture so far on validation.
 # [2, 4, 4, 6] Best on test set.
 # We will keep both, but mostly use [2, 2, 4] because of our limited
 # computation power.

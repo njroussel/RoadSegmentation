@@ -3,11 +3,11 @@ NUM_LABELS = 2
 TRAINING_SIZE = 100
 SEED = 43212  # Set to None for random seed.
 EVAL_BATCH_SIZE = 128  # 64
-BATCH_SIZE =  128
-NUM_EPOCHS = 10 # Will later be determined by validation.
+BATCH_SIZE = 128
+NUM_EPOCHS = 10  # Will later be determined by validation.
 ROTATED_IMG = 300
 ROTATE_IMAGES = True
-RESTORE_MODEL = False  # If True, restore existing model instead of training a new one
+RESTORE_MODEL = True  # If True, restore existing model instead of training a new one
 TEST_PREDICTIONS = True
 RECORDING_STEP = 1000
 LEARNING_RATE = 0.001
@@ -35,7 +35,6 @@ IMG_BORDER = 30  # MUST BE EVEN (could eventually be even ....)
 IMG_TOTAL_SIZE = IMG_PATCH_SIZE + 2 * IMG_BORDER
 
 THETA_THRESH = 0.01
-
 
 # Validation parameters:
 VALIDATION_TRAIN_PERC = 0.6
