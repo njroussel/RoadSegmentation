@@ -3,6 +3,7 @@ import progressbar
 import tensorflow as tf
 
 import image_helpers as img_help
+from global_vars import *
 
 
 def separate_set(data, labels, train_per, val_per):
