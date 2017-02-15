@@ -3,6 +3,7 @@ import progressbar
 import tensorflow as tf
 
 import image_helpers as img_help
+from global_vars import *
 
 
 def separate_set(data, labels, train_per, val_per):
@@ -139,7 +140,7 @@ def params_conv_layers(conv_arch, conv_depth, channels, seed=None):
         for layer in range(n_conv):
             conv_weights = tf.Variable(
                 tf.truncated_normal(
-                    [3, 3, prev_depth, new_depth],  # 3x3 filter, depth augmenting by few steps.
+                    [FILTER_SIZE, FILTER_SIZE, prev_depth, new_depth],  # 3x3 filter, depth augmenting by few steps.
                     stddev=0.1,
                     seed=seed))
             conv_biases = tf.Variable(tf.zeros([new_depth]))

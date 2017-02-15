@@ -28,7 +28,8 @@ def get_image_summary_3d(img):
     return V
 
 
-def get_prediction_images(file_regex, input_dir, output_dir, size, s, model, means, stds, global_vars, thresh, post_process):
+def get_prediction_images(file_regex, input_dir, output_dir, size, s, model, means, stds, global_vars, thresh,
+                          post_process):
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 

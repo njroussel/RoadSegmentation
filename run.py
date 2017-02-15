@@ -14,6 +14,8 @@ import prediction_helpers as pred_help
 
 SEED = 0xDEADBEEF
 
+# Initialisation of some flags for tensor flow
+# (In this case we declare the directory to store nets as we go))
 tf.app.flags.DEFINE_string(
     'train_dir', '/tmp/model', """Directory where to write event logs and checkpoint.""")
 
@@ -24,9 +26,12 @@ if not os.path.exists(FLAGS.train_dir):
     os.makedirs(FLAGS.train_dir)
 
 
-# Initialisation of some flags for tensor flow
-# (In this case we declare the directory to store nets as we go))
 def main(argv=None):
+    """
+    Main methode. Uses the global_vars and global_vars_pp files to run the model.
+    :param argv: None
+    :return: Nothing
+    """
     # setup seeds
     np.random.seed(SEED)
     tf.set_random_seed(SEED)
@@ -148,6 +153,7 @@ def main(argv=None):
                                             means, stds, global_vars_pp, max_thresh, True)
 
         s.close()
+
 
 if __name__ == '__main__':
     tf.app.run()

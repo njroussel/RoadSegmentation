@@ -24,7 +24,7 @@ logs = {
     "Seed": SEED,
     "Batch_size": BATCH_SIZE,
     "Num_epoch": NUM_EPOCHS,
-    "Theta_thresh": THETA_THRESH, 
+    "Theta_thresh": THETA_THRESH,
     "Rotate_images": ROTATE_IMAGES,
     "Nbr_rotated_img": ROTATED_IMG,
     "Conv_arch": CONV_ARCH,
@@ -35,6 +35,7 @@ logs = {
     "Validation_train_perc": VALIDATION_TRAIN_PERC,
     "Validation_val_perc": VALIDATION_VAL_PERC,
     "Validation_test_perc": VALIDATION_TEST_PERC,
+    "Filter size": FILTER_SIZE,
 }
 
 

@@ -191,13 +191,15 @@ def learn(sat_images, label_images, configuration, SEED, FLAGS, save_model_filep
 
                         print("\ncomputing intermediate accuracy and loss at step", step)
                         print("computing train accuracy")
-                        acc = batch_sum(s, eval_accuracy_graph, train_set, configuration.EVAL_BATCH_SIZE, eval_data_node,
+                        acc = batch_sum(s, eval_accuracy_graph, train_set, configuration.EVAL_BATCH_SIZE,
+                                        eval_data_node,
                                         eval_label_node)
                         train_acc = acc / int(np.ceil(len(train_set[0]) / configuration.EVAL_BATCH_SIZE))
                         logger.append_log("Accuracy_training", train_acc)
 
                         print("computing validation accuracy")
-                        acc = batch_sum(s, eval_accuracy_graph, valid_set, configuration.EVAL_BATCH_SIZE, eval_data_node,
+                        acc = batch_sum(s, eval_accuracy_graph, valid_set, configuration.EVAL_BATCH_SIZE,
+                                        eval_data_node,
                                         eval_label_node)
                         valid_acc = acc / int(np.ceil(len(valid_set[0]) / configuration.EVAL_BATCH_SIZE))
                         logger.append_log("Accuracy_validation", valid_acc)

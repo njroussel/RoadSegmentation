@@ -87,7 +87,6 @@ def quantize_binary_images(images, quantization_patch_size, output_patch_size):
     return output
 
 
-
 def standardize(images, means=None, stds=None):
     """ Standardize a group of patches.
         Returns std_patches, means, stds.
