@@ -22,7 +22,7 @@ learning" class. More specifically, it is our solution for the second project
 on road segmentation.
   This file gives an overview of our code and how it functions. All
 additional explanations about the project itself can be found in the official
-paper for it.
+paper for it (the `paper.pdf file`).
 
   The goal of the project is to segment a satellite image of earth by determing
   which patches of 16x16 pixels are roads or not.
@@ -30,6 +30,11 @@ paper for it.
   In short, the code runs a first convolutional neural network to get basic predictions. After this it runs a second one, a postprocessing one, which uses the previously computed predictions to give a final prediction.
 
 ### Results
+We achieved about a 0.91 F1-score, below you will find an image illustrating
+the qualitative result achieved. Every detected road patch is covered in red on
+the image.
+  
+![Final result](result.jpg)
 
 
 ### Setup
