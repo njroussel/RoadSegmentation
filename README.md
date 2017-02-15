@@ -5,33 +5,38 @@ Collaborators:
 * [Rimbaud13](https://github.com/rimbaud13)    
 * [Trofleb](https://github.com/trofleb)
 
-Table of Contents :
-===================
-  1. [Introduction](#introduction)
-  2. Setup
-  3. Code overview
-  4. Configuration
-  5. Running
+### Table of Contents :
+  * [Introduction](#introduction)
+  * [Results](#results)
+  * [Setup](#setup)
+    * [Python](#pyton)
+    * [Environment](#environment)
+  * [Code overview](#code-overview)
+  * [Configuration](#configuration)
+  * [Running](#running)
 
 
-1. Introduction :
-===================  
-  This project is part of the EPFL "Pattern classification and machine
+### Introduction :
+  This project is part of the [EPFL](www.epfl.ch) "Pattern classification and machine
 learning" class. More specifically, it is our solution for the second project
 on road segmentation.
   This file gives an overview of our code and how it functions. All
 additional explanations about the project itself can be found in the official
 paper for it.
 
+  The goal of the project is to segment a satellite image of earth by determing
+  which patches of 16x16 pixels are roads or not.
+
   In short, the code runs a first convolutional neural network to get basic predictions. After this it runs a second one, a postprocessing one, which uses the previously computed predictions to give a final prediction.
 
-2. Setup :
-===================
+### Results
+
+
+### Setup :
   The machine learning part of the code runs entirely on python. These
 are our recommendations for the package versions and environment.
 
-2.1 Python:
--------------------
+#### Python:
   These are the python and its packages versions used to produce our
 results. Python should be available at https://www.python.org/ and it's packages
 can be found with 'pip' https://docs.python.org/3.5/installing/.
@@ -45,8 +50,7 @@ tensorflow : version 0.12.0
 progressbar2 : version 3.11.0
 ```
 
-2.2 Environment:
--------------------
+#### Environment:
   These are general recommendations for the environment in which the code
 runs:
   1. If possible use a CUDA enabled GPU. Tensorflow supports CUDA enabled
@@ -65,13 +69,10 @@ The training set should be at the root of the project in a folder named
   4. Do not delete the empty folders in the project, they are needed for outputs. Depending on the environment, our code is not allowed to create the folder by itself, hence our warning about the empty folders.
 
 
-3. Code overview :
-===================
-
+### Code overview :
 The `run.py` file is the main file which runs our code from with the parameters found `global_vars.py` and `global_vars_pp.py`. The `learner.py` file contains the main Tensorflow code - it setups the model and runs the validation. `logger.py`, `prediction_helpers`, `image_helpers`, `mask_to_submission.py` and `tf_helpers.py` are files which contain helper methods to modularize our code.
 
-4. Configuration :
-===================
+### Configuration :
   In the `global_vars.py` file are all the parameters which will be used for the
 first neural network. The `global_vars_pp.py` file contains the parameters for
 the postprocessing neural network. Documentation about each parameter can be
@@ -79,13 +80,7 @@ found in the individual files.
 
 The default parameters will load a pretrained model which was built from the other default parameters we provide.
 
-5. Running :
-===================
-
-IMPORTANT:  
-We were unable to upload our trained model on the Microsoft service (due to size restrictions). Our model is available on [Dropbox](https://www.dropbox.com/sh/g6z7nv8cnjhyrzn/AAAOb-TbqjfNKyfS1OR4mwF5a?dl=0). Given the unexpected size restriction, we had to reupload the file onto Dropbox, hence the late upload. Unzip the `model.zip` in the `model_save` folder, and `model_pp.zip` in `model_save_pp`. The paths to the models should be (from the root) `./model_save/last_model.ckpt.*` and `./model_save_pp/last_model.ckpt.*`.
-
-
+### Running :
 16 GB of RAM + swap space is needed at least in order to run our optimal result (even when loading the model from the files).
 
   Running the code is straight forward - simply use:
