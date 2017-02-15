@@ -16,7 +16,7 @@ Collaborators:
   * [Running](#running)
 
 
-### Introduction :
+### Introduction
   This project is part of the [EPFL](www.epfl.ch) "Pattern classification and machine
 learning" class. More specifically, it is our solution for the second project
 on road segmentation.
@@ -32,11 +32,11 @@ paper for it.
 ### Results
 
 
-### Setup :
+### Setup
   The machine learning part of the code runs entirely on python. These
 are our recommendations for the package versions and environment.
 
-#### Python:
+#### Python
   These are the python and its packages versions used to produce our
 results. Python should be available at https://www.python.org/ and it's packages
 can be found with 'pip' https://docs.python.org/3.5/installing/.
@@ -50,7 +50,7 @@ tensorflow : version 0.12.0
 progressbar2 : version 3.11.0
 ```
 
-#### Environment:
+#### Environment
   These are general recommendations for the environment in which the code
 runs:
   1. If possible use a CUDA enabled GPU. Tensorflow supports CUDA enabled
@@ -69,10 +69,10 @@ The training set should be at the root of the project in a folder named
   4. Do not delete the empty folders in the project, they are needed for outputs. Depending on the environment, our code is not allowed to create the folder by itself, hence our warning about the empty folders.
 
 
-### Code overview :
+### Code overview
 The `run.py` file is the main file which runs our code from with the parameters found `global_vars.py` and `global_vars_pp.py`. The `learner.py` file contains the main Tensorflow code - it setups the model and runs the validation. `logger.py`, `prediction_helpers`, `image_helpers`, `mask_to_submission.py` and `tf_helpers.py` are files which contain helper methods to modularize our code.
 
-### Configuration :
+### Configuration
   In the `global_vars.py` file are all the parameters which will be used for the
 first neural network. The `global_vars_pp.py` file contains the parameters for
 the postprocessing neural network. Documentation about each parameter can be
@@ -80,7 +80,7 @@ found in the individual files.
 
 The default parameters will load a pretrained model which was built from the other default parameters we provide.
 
-### Running :
+### Running
 16 GB of RAM + swap space is needed at least in order to run our optimal result (even when loading the model from the files).
 
   Running the code is straight forward - simply use:
