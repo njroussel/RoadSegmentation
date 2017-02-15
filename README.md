@@ -1,18 +1,13 @@
-# Pattern classification and machine learning  
-# Project 2 - Road Segmentation  
+# Road Segmentation  
 
-Team "Here come dat boi"
-  * Justinien Bouron   - 236608
-  * Nicolas Roussel    - 238333
-  * Nicolas Casademont - 223485
-
-  EPFL, Switzerland  
-  22.12.2016
-
+Collaborators:
+* [JBouron](https://github.com/jbouron)
+* [Rimbaud13](https://github.com/rimbaud13)    
+* [Trofleb](https://github.com/trofleb)
 
 Table of Contents :
 ===================
-  1. Introduction
+  1. [Introduction](#introduction)
   2. Setup
   3. Code overview
   4. Configuration
