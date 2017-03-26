@@ -22,7 +22,7 @@ learning" class. More specifically, it is our solution for the second project
 on road segmentation.
   This file gives an overview of our code and how it functions. All
 additional explanations about the project itself can be found in the official
-paper for it (the `paper.pdf file`).
+paper for it (the `paper.pdf` file).
 
   The goal of the project is to segment a satellite image of earth by determing
   which patches of 16x16 pixels are roads or not.
